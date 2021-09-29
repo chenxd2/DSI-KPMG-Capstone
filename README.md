@@ -1,6 +1,6 @@
 # DSI-KPMG-Capstone
 
-##WEEK 3 Updates
+## WEEK 3 Updates
 ### Progress
 - Located unique peaks and troughs of index change. And looked for the historical events, variables(GDP, unemployment rate, ...) associated with these changes.
 - Found long-term growth and short-term contraction, aka cycles, in the index change.
