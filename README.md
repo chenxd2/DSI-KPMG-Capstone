@@ -2,8 +2,19 @@
 
 ## WEEK 4 Updates
 ### Progress
-- Gathered predictive features dataset and performed data wrangling work. We chose the variables mentioned in this doc: https://www.investopedia.com/articles/personal-finance/020215/top-ten-us-economic-indicators.asp. We will consider add and remove some features later. (from 1969.08.01 - 2021-03-01)
-- 
+- Gathered predictive features dataset and performed data wrangling work. We chose the variables mentioned in this doc: https://www.investopedia.com/articles/personal-finance/020215/top-ten-us-economic-indicators.asp. We will consider add and remove some features later. (from 1969.08.01 - 2021-03-01):
+ Unemployment Rate(16 and over): https://fred.stlouisfed.org/series/UNRATE
+ Median Sales Price for New Houses Sold in the United States: https://fred.stlouisfed.org/series/MSPNHSUS
+ 10-Year Treasury Constant Maturity Rate: https://fred.stlouisfed.org/series/GS10
+ Personal Consumption Expenditures: https://fred.stlouisfed.org/series/PCE
+ Manufacturing New Orders:https://fred.stlouisfed.org/series/AMTMNO
+ Industrial Production: Manufacturing (NAICS): https://fred.stlouisfed.org/series/IPMAN
+ Producer Price Index by Commodity: All Commodities（PPIACO）https://fred.stlouisfed.org/series/PPIACO
+ Consumer Price Index for All Urban Consumers: Food and Beverages in U.S. City Average (CPIFABSL) https://fred.stlouisfed.org/series/CPIFABSL
+ Construction Spending:https://fred.stlouisfed.org/series/TTLCONS
+ MedianUsualWeeklyRealEarnings：https://fred.stlouisfed.org/series/LES1252881600Q
+ VolumeOfTotalRetailTradeSales：https://fred.stlouisfed.org/series/SLRTTO01USQ657S
+ 
   
 
 
