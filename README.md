@@ -2,7 +2,7 @@
 
 ## WEEK 4 Updates
 ### Progress
-- Gathered predictive features dataset and performed data wrangling work. We chose the variables mentioned in this doc: https://www.investopedia.com/articles/personal-finance/020215/top-ten-us-economic-indicators.asp. We will consider add and remove some features later. (from 1969.08.01 - 2021-03-01):
+- Gathered predictive features dataset and performed data wrangling work. We chose the variables mentioned in this doc: https://www.investopedia.com/articles/personal-finance/020215/top-ten-us-economic-indicators.asp. We will consider add and remove some features later. (from 1969.08.01 - 2021-03-01): <br>
  [Unemployment Rate(16 and over):] (https://fred.stlouisfed.org/series/UNRATE) <br>
  [Median Sales Price for New Houses Sold in the United States:] (https://fred.stlouisfed.org/series/MSPNHSUS) <br>
  [10-Year Treasury Constant Maturity Rate:] (https://fred.stlouisfed.org/series/GS10) <br>
