@@ -14,12 +14,13 @@
  [Construction Spending:] (https://fred.stlouisfed.org/series/TTLCONS) <br>
  [MedianUsualWeeklyRealEarnings：] (https://fred.stlouisfed.org/series/LES1252881600Q) <br>
  [VolumeOfTotalRetailTradeSales：] (https://fred.stlouisfed.org/series/SLRTTO01USQ657S) <br>
- - Correlation check: we found multiple predictors are highly correlated with each other. 
- - Power calculation:
+- Correlation check: Found multiple predictors are highly correlated with each other. 
+- Co-integration test(p-value): WIP
+### Problem
+- Data length not consistent.
+- Too many features are strongly correlated, and how should we keep these featurs?
  
   
-
-
 ## WEEK 3 Updates
 ### Progress
 - Located unique peaks and troughs of index change. And looked for the historical events, variables(GDP, unemployment rate, ...) associated with these changes.
@@ -29,6 +30,5 @@
 - Data not consistent with the website.
 - CIQ data access.
 - Power calculation for feature selection.
-- 
 
 
