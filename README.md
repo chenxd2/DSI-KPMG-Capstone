@@ -21,7 +21,9 @@
 ### Problem
 - Data length not consistent.
 - Too many features are strongly correlated, and how should we keep these featurs?
- 
+
+### Plan
+- Label expansion and contraction with 0 and 1 respectively, turning the ML problem into a classification problem.
   
 ## WEEK 3 Updates
 ### Progress
