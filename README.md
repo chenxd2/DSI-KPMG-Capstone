@@ -1,5 +1,20 @@
 # DSI-KPMG-Capstone
 
+## WEEK 5 Updates
+### Progress
+- Implemented VAR baseline model. Used data from 2017-5 to 2018-4. RMSE = 101.75. maxlags = 13. We dropped Unemployment rate and GS10 when building the model based on the p-value. 
+- Implemented logistic regression model to classify the expanding and contracting trends. Accuracy rate is lower than 50%, which proved to be not applicable. 
+- We also tried to implement auto-arima model to forecast the S&P 500 EPS-Index.
+
+### Problem
+- Our accuracy rate was low due to the black swan event(covid) in recent two years. 
+- If our number of features is enough?
+
+### Plan
+- Implement Sliding window on our data and put it in our ML model.
+- LSTM
+
+
 ## WEEK 4 Updates
 ### Progress
 - Gathered predictive features dataset and performed data wrangling work. We chose the variables mentioned in this doc: https://www.investopedia.com/articles/personal-finance/020215/top-ten-us-economic-indicators.asp. We will consider add and remove some features later. (from 1969.08.01 - 2021-03-01): <br>
@@ -15,8 +30,8 @@
  [MedianUsualWeeklyRealEarnings：] (https://fred.stlouisfed.org/series/LES1252881600Q) <br>
  [VolumeOfTotalRetailTradeSales：] (https://fred.stlouisfed.org/series/SLRTTO01USQ657S) <br>
 - Correlation check: Found multiple predictors are highly correlated with each other. 
-- Co-integration test(p-value): WIP 🚧 
-  - reasoning: All features are not stationary, so cointegration which is probably a more robust measure of linkage between two features.
+- <del>Co-integration test(p-value): WIP 🚧 </del>
+- <del>reasoning: All features are not stationary, so cointegration which is probably a more robust measure of linkage between two features.</del>
 
 ### Problem
 - Data length not consistent.
