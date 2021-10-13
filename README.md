@@ -30,8 +30,8 @@
  [MedianUsualWeeklyRealEarnings：] (https://fred.stlouisfed.org/series/LES1252881600Q) <br>
  [VolumeOfTotalRetailTradeSales：] (https://fred.stlouisfed.org/series/SLRTTO01USQ657S) <br>
 - Correlation check: Found multiple predictors are highly correlated with each other. 
-- Co-integration test(p-value): WIP 🚧 
-  - reasoning: All features are not stationary, so cointegration which is probably a more robust measure of linkage between two features.
+- <del>Co-integration test(p-value): WIP 🚧 </del>
+- <del>reasoning: All features are not stationary, so cointegration which is probably a more robust measure of linkage between two features.</del>
 
 ### Problem
 - Data length not consistent.
