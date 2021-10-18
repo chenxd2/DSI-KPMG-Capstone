@@ -2,7 +2,7 @@
 
 ## WEEK 5 Updates
 ### Progress
-- Implemented VAR baseline model. We dropped Unemployment rate and GS10 when building the model based on p-value of the Granger causality test. Also, we used data from 1973-1 to 2017-4 to fit the model and picked maxlags=13 based on AIC. Predicted target from 1973-1 to 2017-4. RMSE = 101.75. 
+- Implemented VAR baseline model. We dropped Unemployment rate and GS10 when building the model based on p-value of the Granger causality test. Also, we used data from 1973-1 to 2017-4 to fit the model and picked maxlags=13 based on AIC. Predicted target from 2017-7 to 2018-4. RMSE = 101.75. 
 - Implemented logistic regression model to classify the expanding and contracting trends. Accuracy rate is lower than 50%, which proved to be not applicable. 
 - We also tried to implement auto-arima model to forecast the S&P 500 EPS-Index.
 
