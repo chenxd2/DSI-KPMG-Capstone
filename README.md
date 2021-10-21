@@ -1,5 +1,23 @@
 # DSI-KPMG-Capstone
 
+## WEEK 6 Updates
+### Progress
+- Feature selection: identified causation relationship within predictors, added new features that represent government fiscal and monetary policies 
+- Feature engineering: constructed rolling window, normalized feature data, normalized time (assume seasonality exist)
+- Implemented CNN model
+- In process of implementing LSTM model
+
+### Problem
+- How to deal with important feature that contains many NA values?
+- Is it useful to normalize date?
+
+### Plan
+- Feature selection
+- Refine CNN model
+- Implement LSTM model
+
+---
+
 ## WEEK 5 Updates
 ### Progress
 - Implemented VAR baseline model. We dropped Unemployment rate and GS10 when building the model based on p-value of the Granger causality test. Also, we used data from 1973-1 to 2017-4 to fit the model and picked maxlags=13 based on AIC. Predicted target from 2017-7 to 2018-4. RMSE = 101.75. 
@@ -14,6 +32,7 @@
 - Implement Sliding window on our data and put it in our ML model.
 - LSTM
 
+---
 
 ## WEEK 4 Updates
 ### Progress
@@ -39,11 +58,14 @@
 
 ### Plan
 - Label expansion and contraction with 0 and 1 respectively, turning the ML problem into a classification problem.
-  
+
+---
+
 ## WEEK 3 Updates
 ### Progress
 - Located unique peaks and troughs of index change. And looked for the historical events, variables(GDP, unemployment rate, ...) associated with these changes.
 - Found long-term growth and short-term contraction, aka cycles, in the index change.
+
 ### Problem
 - Clarificaiton of target variable.
 - Data not consistent with the website.
