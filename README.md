@@ -15,6 +15,7 @@
 - Feature selection
 - Refine CNN model
 - Implement LSTM model
+- gradient-boosting tree/forest
 
 ---
 
