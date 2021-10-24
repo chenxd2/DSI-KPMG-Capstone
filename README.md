@@ -1,4 +1,12 @@
 # DSI-KPMG-Capstone
+## WEEK 7 Updates
+### Progress
+- First report: 1. Topic overview and progress overview; 2. EDA on both target and predictors? Feature illustration? 3. Model Setup
+- Auto CNN model
+- LSTM
+### Problem
+
+### Plan
 
 ## WEEK 6 Updates
 ### Progress
