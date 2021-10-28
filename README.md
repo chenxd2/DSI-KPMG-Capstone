@@ -1,12 +1,18 @@
 # DSI-KPMG-Capstone
 ## WEEK 7 Updates
 ### Progress
-- First report: 1. Topic overview and progress overview; 2. EDA on both target and predictors? Feature illustration? 3. Model Setup
-- Auto CNN model
-- LSTM
+- First report: 1. Topic overview and progress overview; 2. Feature selection; 3. EDA on both target and predictors; 4. Model Setup, VAR, CNN, LSTM
+- Automate CNN model (pipeline)
+- Automate LSTM model (pipeline)
 ### Problem
 
 ### Plan
+- Modify LSTM archetecture
+- CNN model fine tunning
+- LSTM model fine tunning
+- Scenrio based model set up
+
+---
 
 ## WEEK 6 Updates
 ### Progress
