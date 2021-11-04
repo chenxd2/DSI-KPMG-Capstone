@@ -4,9 +4,9 @@
 ### Progress
 - update feature datasets
 - binary classification model
-- modify LSTM and CNN model 
+- modify LSTM and CNN model, implement forward forecasting
+
 ### Problem
-- number of period predict forward? so far, our model predicts 1 month forward
 - CIQ database access
 - Include previous target variable or not? if include, prediction looks like a simple shifting on CNN
 
@@ -20,6 +20,7 @@
 - First report: 1. Topic overview and progress overview; 2. Feature selection; 3. EDA on both target and predictors; 4. Model Setup, VAR, CNN, LSTM
 - Automate CNN model (pipeline)
 - Automate LSTM model (pipeline)
+- 
 ### Problem
 
 ### Plan
