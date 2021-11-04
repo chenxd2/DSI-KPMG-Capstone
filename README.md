@@ -8,6 +8,7 @@
 ### Problem
 - number of period predict forward? so far, our model predicts 1 month forward
 - CIQ database access
+- Include previous target variable or not? if include, prediction looks like a simple shifting on CNN
 
 ### Plan
 - emsemble LSTM, CNN, Random forest classifier 
