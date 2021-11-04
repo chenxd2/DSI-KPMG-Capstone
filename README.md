@@ -1,4 +1,19 @@
 # DSI-KPMG-Capstone
+
+## WEEK 8 Updates
+### Progress
+- update feature datasets
+- binary classification model
+- modify LSTM and CNN model 
+### Problem
+- number of period predict forward? so far, our model predicts 1 month forward
+- CIQ database access
+
+### Plan
+- emsemble LSTM, CNN, Random forest classifier 
+
+---
+
 ## WEEK 7 Updates
 ### Progress
 - First report: 1. Topic overview and progress overview; 2. Feature selection; 3. EDA on both target and predictors; 4. Model Setup, VAR, CNN, LSTM
