@@ -1,5 +1,17 @@
 # DSI-KPMG-Capstone
 
+## WEEK 9 Updates
+### Progress
+- include interaction term in the LSTM -> rmse not change, Implement Cross Validation to find best lags and leading
+- Modify LSTM and CNN
+
+### Problem
+- Can't find source for leading period for each economic indicators
+
+### Plan
+- Feature importance
+- Ensemble model using different lags for different features.
+
 ## WEEK 8 Updates
 ### Progress
 - update feature datasets
