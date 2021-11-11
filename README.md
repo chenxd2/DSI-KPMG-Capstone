@@ -1,5 +1,20 @@
 # DSI-KPMG-Capstone
 
+## WEEK 10 Updates
+### Progress
+- Built up ensemble model (lead 1-24) including Random Forest, LSTM and CNN
+- Defined and implemented ensemble rules and improved prediction performance
+- Hyper-parameter fine tunning (partial)
+- Visualize feature and lag importance 
+
+### Problem
+- short term and long term seperation in features
+
+### Plan
+- Improve model automation class
+
+---
+
 ## WEEK 9 Updates
 ### Progress
 - include interaction term in the LSTM -> rmse not change, Implement Cross Validation to find best lags and leading
@@ -11,6 +26,8 @@
 ### Plan
 - Feature importance
 - Ensemble model using different lags for different features.
+
+---
 
 ## WEEK 8 Updates
 ### Progress
