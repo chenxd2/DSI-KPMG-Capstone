@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[55]:
-
-
 import pandas as pd
 from pandas import concat
 import os
@@ -15,8 +9,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras import backend as K
 from keras.layers.convolutional import Conv2D, MaxPooling2D, AveragePooling2D
-import random
-import tensorflow as tf
+
 
 
 
@@ -102,7 +95,7 @@ class AutoCNN():
         return agg
     
 
-    def run(self, timearray, use_target=True, lags=[], leads=[]): 
+    def run(self, use_target=True, lags=[], leads=[]): 
         def root_mean_squared_error(y_true, y_pred):
             return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
         self.models=[]
@@ -237,34 +230,3 @@ class AutoCNN():
             true_y_list.append(inv_y)
 
         return pred_y_list, true_y_list
-
-
-# In[56]:
-
-
-seed=42
-tf.random.set_seed(seed)
-d = np.arange ('2018-05', '2019-05', np.timedelta64 (1,'M'), dtype='datetime64')
-d=d.astype('datetime64[D]')
-lags = [24]*24
-leads = range(1,25)
-cnn_model = AutoCNN(data_name='data_1107.xlsx', target_name='SP500-EPS-Index', drop_cols=[])
-cnn_model.run(d, True, lags,leads)
-y_p,y_t = cnn_model.get_backtesting()
-
-
-# In[60]:
-
-
-plt.figure(figsize=(18,8))
-plt.plot(y_p[0][23:],label='lead 1')
-plt.plot(y_p[23],label='lead 24')
-plt.plot(y_t[23],label='true')
-plt.legend()
-
-
-# In[ ]:
-
-
-
-
