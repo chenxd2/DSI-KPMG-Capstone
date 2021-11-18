@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[58]:
+# In[55]:
 
 
 import pandas as pd
@@ -65,6 +65,8 @@ class AutoCNN():
         self.n_features = len(data.columns) - 1
         self.model = 0
         self.train_result = 0
+        self.y_p=[]
+        self.y_t=[]
         
     def series_to_supervised(self, data, n_in=1, n_out=1, dropnan=True, if_target=True):
         n_vars = 1 if type(data) is list else data.shape[1]
@@ -103,14 +105,21 @@ class AutoCNN():
     def run(self, timearray, use_target=True, lags=[], leads=[]): 
         def root_mean_squared_error(y_true, y_pred):
             return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
+        self.models=[]
+        self.values_24=[]
         scaler = MinMaxScaler(feature_range=(0, 1))
         scaled = scaler.fit_transform(self.data)
+        
+        self.scaler = scaler
+        self.leads=leads
+        self.lags=lags
+        
         pred_y_list = []
         true_y_list = []
         n = 1
-        n_loop = 2
-        for i in range(len(timearray)):
-            pred_begin_date = timearray[i]
+        n_loop = 1
+        for i in range(len(lags)):
+            #pred_begin_date = timearray[i]
             lag = lags[i]
             lead = leads[i]
             reframed = self.series_to_supervised(scaled, lag, lead, True, use_target)
@@ -118,30 +127,35 @@ class AutoCNN():
             reframed.drop(reframed.columns[range(reframed.shape[1] - 1 - (lead - 1) * (self.n_features + 1), reframed.shape[1]-1)], axis=1, inplace=True)
         
             values = reframed.values
-            self.n = 1
+            self.values_24.append(values)
+            
+            #self.n = 1
 
-            test_date_begin = self.data.index.get_loc(pred_begin_date) - lag - lead + 1
-            train = values[:test_date_begin, :]
-            test = values[test_date_begin: test_date_begin+self.n, :]
+            #test_date_begin = self.data.index.get_loc(pred_begin_date) - lag - lead + 1
+            #train = values[:test_date_begin, :]
+            #test = values[test_date_begin: test_date_begin+self.n, :]
 
             # split into input and outputs
-            train_X, train_y = train[:, :-1], train[:, -1]
-            test_X, test_y = test[:, :-1], test[:, -1]
-                
+            #train_X, train_y = train[:, :-1], train[:, -1]
+            #test_X, test_y = test[:, :-1], test[:, -1]
+            
+            
+            X, y= values[:,:-1], values[:,-1]
+            X_reshaped = np.array(X).reshape(len(X), lag, self.n_features+1, 1)
             # reshape data and normalize data
-            if use_target:
-                features  = self.n_features+1
-                train_X_reshaped = np.array(train_X).reshape(len(train_X), lag, self.n_features+1, 1)
-                test_X_reshaped = np.array(test_X).reshape(len(test_X), lag, self.n_features+1, 1)
-            else:
-                features = self.n_features
-                train_X_reshaped = np.array(train_X).reshape(len(train_X), lag, self.n_features, 1)
-                test_X_reshaped = np.array(test_X).reshape(len(test_X), lag, self.n_features, 1)            
+            #if use_target:
+               # features  = self.n_features+1
+                #train_X_reshaped = np.array(train_X).reshape(len(train_X), lag, self.n_features+1, 1)
+                #test_X_reshaped = np.array(test_X).reshape(len(test_X), lag, self.n_features+1, 1)
+            #else:
+               # features = self.n_features
+               # train_X_reshaped = np.array(train_X).reshape(len(train_X), lag, self.n_features, 1)
+               # test_X_reshaped = np.array(test_X).reshape(len(test_X), lag, self.n_features, 1)            
 
             #build CNN model
             model = Sequential()
             model.add(Conv2D(filters = 32, 
-                             input_shape = ((lag, features, 1)),
+                             input_shape = ((lag, self.n_features+1, 1)),
                              data_format = 'channels_last',
                              kernel_size=(2,2), 
                              strides=(1,1),   
@@ -152,7 +166,10 @@ class AutoCNN():
             model.add(Dense(45, activation='relu'))
             model.add(Dense(1))
             model.compile(optimizer='adam', loss=root_mean_squared_error)
-
+            result = model.fit(X_reshaped, y, verbose=0, epochs=20) 
+            self.models.append(model)
+            
+            '''
             inv_yhat_list=[]
             for j in range(n_loop):
                 result = model.fit(train_X_reshaped, train_y, verbose=0, validation_data=(test_X_reshaped, test_y), epochs=20,shuffle=False)      
@@ -186,9 +203,67 @@ class AutoCNN():
         rmse = np.sqrt(mean_squared_error(pred_y_list, true_y_list))
         print('Test RMSE: %.3f' % rmse)
         self.rmse = round(rmse,2)  
+        '''
+            
+    def get_backtesting(self):
+        pred_y_list = []
+        true_y_list = []
+
+        for i in range(len(self.leads)):
+            model = self.models[i]
+            value = self.values_24[i]
+            train_X, train_y = value[:, :-1], value[:, -1]
+            
+            train_X_reshape = np.array(train_X).reshape(len(train_X), self.lags[i], self.n_features+1, 1)
+            
+            
+            pred_y = model.predict(train_X_reshape)
+            pred_y = pred_y.reshape((len(pred_y), 1))
+
+            train_X = train_X.reshape((train_X.shape[0], 1, train_X.shape[1]))
+            train_X = train_X.reshape((train_X.shape[0], train_X.shape[2]))        
+            inv_yhat = np.concatenate((pred_y, train_X[:, 1:self.n_features+1]), axis=1)
+            inv_yhat = self.scaler.inverse_transform(inv_yhat)
+            inv_yhat = inv_yhat[:,0]
+            
+            # invert scaling for actual
+
+            train_y = train_y.reshape((len(train_y), 1))
+            inv_y = np.concatenate((train_y, train_X[:, 1:self.n_features+1]), axis=1)
+            inv_y = self.scaler.inverse_transform(inv_y)
+            inv_y = inv_y[:,0]
+
+            pred_y_list.append(inv_yhat)
+            true_y_list.append(inv_y)
+
+        return pred_y_list, true_y_list
 
 
+# In[56]:
 
+
+seed=42
+tf.random.set_seed(seed)
+d = np.arange ('2018-05', '2019-05', np.timedelta64 (1,'M'), dtype='datetime64')
+d=d.astype('datetime64[D]')
+lags = [24]*24
+leads = range(1,25)
+cnn_model = AutoCNN(data_name='data_1107.xlsx', target_name='SP500-EPS-Index', drop_cols=[])
+cnn_model.run(d, True, lags,leads)
+y_p,y_t = cnn_model.get_backtesting()
+
+
+# In[60]:
+
+
+plt.figure(figsize=(18,8))
+plt.plot(y_p[0][23:],label='lead 1')
+plt.plot(y_p[23],label='lead 24')
+plt.plot(y_t[23],label='true')
+plt.legend()
+
+
+# In[ ]:
 
 
 
