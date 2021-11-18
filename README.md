@@ -1,5 +1,17 @@
 # DSI-KPMG-Capstone
 
+## WEEK 11 Updates
+### Progress
+- Refine ensemble model (structure of model object modification)
+- Back testing and visualization 
+
+### Problem
+
+### Plan
+- Sector model
+
+---
+
 ## WEEK 10 Updates
 ### Progress
 - Built up ensemble model (lead 1-24) including Random Forest, LSTM and CNN
