@@ -1,24 +1,12 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import pandas as pd
 from pandas import concat
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.metrics import mean_squared_error
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten, LSTM
 from keras import backend as K
-
-import tensorflow as tf
-
-
-# In[5]:
 
 
 class AutoLSTM():
@@ -106,8 +94,91 @@ class AutoLSTM():
             agg.dropna(inplace=True)
         return agg
     
+    
+    def get_predict(self, timearray):
+        pred_y_list = []
+        true_y_list = []
+        n = 1
 
-    def run(self, timearray, use_target=True, lags=[], leads=[]): 
+        for i in range(len(timearray)):
+
+            pred_begin_date = timearray[i]
+            lag = self.lags[i]
+            lead = self.leads[i]
+
+            # # flatten data
+            # reframed = self.series_to_supervised(self.scaled_data, lag, lead, True, use_target)
+            # # drop columns we don't want to predict
+            # reframed.drop(reframed.columns[range(reframed.shape[1] - self.n_features, reframed.shape[1])], axis=1, inplace=True)
+            # reframed.drop(reframed.columns[range(reframed.shape[1] - 1 - (lead - 1) * (self.n_features + 1), reframed.shape[1]-1)], axis=1, inplace=True)
+
+            model = self.models[i]
+            values = self.values_24[i]
+            self.n = n
+
+            test_date_begin = self.data.index.get_loc(pred_begin_date) - lag - lead + 1
+
+            # train = values[:test_date_begin, :]
+            test = values[test_date_begin: test_date_begin+self.n, :]
+            test_X, test_y = test[:, :-1], test[:, -1]
+
+            # reshape input to be 3D [samples, timesteps, features]
+            test_X = test_X.reshape((test_X.shape[0], 1, test_X.shape[1]))
+
+            # create and fit the LSTM network
+            
+            pred_y = model.predict(test_X)
+
+            test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
+            pred_y = pred_y.reshape((len(pred_y), 1))
+
+            inv_yhat = np.concatenate((pred_y, test_X[:, 1:self.n_features+1]), axis=1)
+            inv_yhat = self.scaler.inverse_transform(inv_yhat)
+            inv_yhat = inv_yhat[:,0]
+            # invert scaling for actual
+
+            test_y = test_y.reshape((len(test_y), 1))
+            inv_y = np.concatenate((test_y, test_X[:, 1:self.n_features+1]), axis=1)
+            inv_y = self.scaler.inverse_transform(inv_y)
+            inv_y = inv_y[:,0]
+
+            pred_y_list.append(inv_yhat[0])
+            true_y_list.append(inv_y[0])
+
+        return pred_y_list, true_y_list
+
+
+    def get_backtesting(self):
+        pred_y_list = []
+        true_y_list = []
+
+        for i in range(len(self.leads)):
+            model = self.models[i]
+            value = self.values_24[i]
+            train_X, train_y = value[:, :-1], value[:, -1]
+            train_X = train_X.reshape((train_X.shape[0], 1, train_X.shape[1]))
+
+            pred_y = model.predict(train_X)
+
+            train_X = train_X.reshape((train_X.shape[0], train_X.shape[2]))
+
+            inv_yhat = np.concatenate((pred_y, train_X[:, 1:self.n_features+1]), axis=1)
+            inv_yhat = self.scaler.inverse_transform(inv_yhat)
+            inv_yhat = inv_yhat[:,0]
+            # invert scaling for actual
+
+            train_y = train_y.reshape((len(train_y), 1))
+            inv_y = np.concatenate((train_y, train_X[:, 1:self.n_features+1]), axis=1)
+            inv_y = self.scaler.inverse_transform(inv_y)
+            inv_y = inv_y[:,0]
+
+            pred_y_list.append(inv_yhat)
+            true_y_list.append(inv_y)
+
+        return pred_y_list, true_y_list
+
+
+    def run(self, use_target=True, lags=[], leads=[]): 
         ''' Run CNN
         
         Params
@@ -122,14 +193,15 @@ class AutoLSTM():
         scaler = MinMaxScaler(feature_range=(0, 1))
         scaled = scaler.fit_transform(self.data)
 
-        pred_y_list = []
-        true_y_list = []
+        self.scaler = scaler
+        self.lags = lags
+        self.leads = leads
+        self.values_24 = []
+        self.models = []
+        
         n = 1
-        n_loop = 2
 
-        for i in range(len(timearray)):
-
-            pred_begin_date = timearray[i]
+        for i in range(len(leads)):
             lag = lags[i]
             lead = leads[i]
 
@@ -140,21 +212,17 @@ class AutoLSTM():
             reframed.drop(reframed.columns[range(reframed.shape[1] - 1 - (lead - 1) * (self.n_features + 1), reframed.shape[1]-1)], axis=1, inplace=True)
 
             values = reframed.values
+
+            self.values_24.append(values)
             self.n = n
 
-            test_date_begin = self.data.index.get_loc(pred_begin_date) - lag - lead + 1
-
-            train = values[:test_date_begin, :]
-            test = values[test_date_begin: test_date_begin+self.n, :]
-
+            train = values
 
             # split into input and outputs
             train_X, train_y = train[:, :-1], train[:, -1]
-            test_X, test_y = test[:, :-1], test[:, -1]
+
             # reshape input to be 3D [samples, timesteps, features]
             train_X = train_X.reshape((train_X.shape[0], 1, train_X.shape[1]))
-            test_X = test_X.reshape((test_X.shape[0], 1, test_X.shape[1]))
-            # print(train_X.shape, train_y.shape, test_X.shape, test_y.shape)
 
             # create and fit the LSTM network
             model = Sequential()
@@ -166,44 +234,40 @@ class AutoLSTM():
                 return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
             model.compile(optimizer='adam', loss=root_mean_squared_error)
             
-            result = model.fit(train_X, train_y, verbose=0, validation_data=(test_X, test_y), epochs=25, batch_size=72)
-            self.model = model
+            result = model.fit(train_X, train_y, verbose=0, epochs=25, batch_size=72)
+            self.models.append(model)
             self.train_result = result
             
-            pred_y = self.model.predict(test_X)
+            # pred_y = self.model.predict(test_X)
 
             # reverse standardization
             #test_X = test_X.reshape((test_X.shape[0], 1, test_X.shape[1]))
 
             # invert scaling for forecast
-            test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
-            pred_y = pred_y.reshape((len(pred_y), 1))
+            # test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
+            # pred_y = pred_y.reshape((len(pred_y), 1))
 
-            inv_yhat = np.concatenate((pred_y, test_X[:, 1:self.n_features+1]), axis=1)
-            inv_yhat = scaler.inverse_transform(inv_yhat)
-            inv_yhat = inv_yhat[:,0]
-            # invert scaling for actual
+            # inv_yhat = np.concatenate((pred_y, test_X[:, 1:self.n_features+1]), axis=1)
+            # inv_yhat = scaler.inverse_transform(inv_yhat)
+            # inv_yhat = inv_yhat[:,0]
+            # # invert scaling for actual
 
-            test_y = test_y.reshape((len(test_y), 1))
-            inv_y = np.concatenate((test_y, test_X[:, 1:self.n_features+1]), axis=1)
-            inv_y = scaler.inverse_transform(inv_y)
-            inv_y = inv_y[:,0]
+            # test_y = test_y.reshape((len(test_y), 1))
+            # inv_y = np.concatenate((test_y, test_X[:, 1:self.n_features+1]), axis=1)
+            # inv_y = scaler.inverse_transform(inv_y)
+            # inv_y = inv_y[:,0]
 
-            pred_y_list.append(inv_yhat)
-            true_y_list.append(inv_y[0])
+            # pred_y_list.append(inv_yhat)
+            # true_y_list.append(inv_y[0])
 
 
-        df_result = pd.DataFrame(pred_y_list, columns=[self.target + '_pred'])
-        df_result[self.target] = true_y_list
-        df_result['Date'] = timearray
-        df_result.set_index(['Date'],inplace=True)
-        self.df_result=df_result
+        # df_result = pd.DataFrame(pred_y_list, columns=[self.target + '_pred'])
+        # df_result[self.target] = true_y_list
+        # df_result['Date'] = timearray
+        # df_result.set_index(['Date'],inplace=True)
+        # self.df_result=df_result
         
-        # calculate RMSE
-        rmse = np.sqrt(mean_squared_error(pred_y_list, true_y_list))
-        print('Test RMSE: %.3f' % rmse)
-        self.rmse = round(rmse,2)
-
-
-
-
+        # # calculate RMSE
+        # rmse = np.sqrt(mean_squared_error(pred_y_list, true_y_list))
+        # print('Test RMSE: %.3f' % rmse)
+        # self.rmse = round(rmse,2)
