@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import pandas as pd
 from pandas import concat
 import os
@@ -14,10 +8,6 @@ from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestClassifier
 from scipy.signal import argrelextrema
 from sklearn.metrics import confusion_matrix
-
-
-# In[15]:
-
 
 class AutoRF():
     
@@ -131,10 +121,25 @@ class AutoRF():
             agg.dropna(inplace=True)
         return agg
     
-    
-    
 
-    def run(self, timearray, lags=[], leads=[]):
+    def get_backtesting(self):
+        pred_y_list = []
+        true_y_list = []
+
+        for i in range(len(self.leads)):
+            model = self.models[i]
+            value = self.values_24[i]
+            train_X, train_y = value[:, :-1], value[:, -1]
+        
+            pred_y = model.predict(train_X)
+        
+            pred_y_list.append(pred_y)
+            true_y_list.append(train_y)
+
+        return pred_y_list, true_y_list
+
+
+    def run(self, lags=[], leads=[]):
         ''' Run CNN
         
         Params
@@ -144,8 +149,12 @@ class AutoRF():
         lag: int, num of past months to consider
         if_target: boolean, whether to include target as a predictor
         '''
-        pred_y_list = []
-        true_y_list = []
+
+        self.lags = lags
+        self.leads = leads
+        self.values_24 = []
+        self.models = []
+
         n = 1
         
         
@@ -153,8 +162,8 @@ class AutoRF():
         self.data.drop('SP500-EPS-Index', axis=1, inplace=True)
         self.data.dropna(inplace = True)
         
-        for i in range(len(timearray)):
-            pred_begin_date = timearray[i]
+        for i in range(len(leads)):
+
             lag = lags[i]
             lead = leads[i]
             # flatten data
@@ -165,17 +174,13 @@ class AutoRF():
             #print(reframed.columns)
 
             values = reframed.values
+            self.values_24.append(values)
             self.n = n
 
-            test_date_begin = self.data.index.get_loc(pred_begin_date) - lag - lead + 1
-
-            train = values[:test_date_begin, :]
-            test = values[test_date_begin: test_date_begin+self.n, :]
-
+            train = values
 
             # split into input and outputs
             train_X, train_y = train[:, :-1], train[:, -1]
-            test_X, test_y = test[:, :-1], test[:, -1]
             # reshape input to be 3D [samples, timesteps, features]
             #train_X = train_X.reshape((train_X.shape[0], 1, train_X.shape[1]))
             #test_X = test_X.reshape((test_X.shape[0], 1, test_X.shape[1]))
@@ -185,41 +190,35 @@ class AutoRF():
             model = RandomForestClassifier(max_depth=5)
 
             result = model.fit(train_X, train_y)
-            self.model = model
+            self.models.append(model)
             self.train_result = result
 
-            pred_y = self.model.predict(test_X)
+        #     pred_y = self.model.predict(test_X)
 
-            # reverse standardization
-            #test_X = test_X.reshape((test_X.shape[0], 1, test_X.shape[1]))
+        #     # reverse standardization
+        #     #test_X = test_X.reshape((test_X.shape[0], 1, test_X.shape[1]))
 
-            # invert scaling for forecast
-            #test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
-            #pred_y = pred_y.reshape((len(pred_y), 1))
+        #     # invert scaling for forecast
+        #     #test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
+        #     #pred_y = pred_y.reshape((len(pred_y), 1))
 
-            # invert scaling for actual
+        #     # invert scaling for actual
 
-            #test_y = test_y.reshape((len(test_y), 1))
+        #     #test_y = test_y.reshape((len(test_y), 1))
 
-            pred_y_list.extend(pred_y)
-            true_y_list.extend(test_y)
+        #     pred_y_list.extend(pred_y)
+        #     true_y_list.extend(test_y)
         
-        print(pred_y_list)
-        print(true_y_list)
-        df_result = pd.DataFrame(pred_y_list, columns=[self.target + '_pred'])
-        df_result[self.target] = true_y_list
-        df_result['Date'] = timearray
-        df_result.set_index(['Date'],inplace=True)
-        self.df_result=df_result
+        # print(pred_y_list)
+        # print(true_y_list)
+        # df_result = pd.DataFrame(pred_y_list, columns=[self.target + '_pred'])
+        # df_result[self.target] = true_y_list
+        # df_result['Date'] = timearray
+        # df_result.set_index(['Date'],inplace=True)
+        # self.df_result=df_result
 
-        
         
         #####################
         #self.train_X = train_X
         #self.train_y = train_y
-
-
-# In[19]:
-
-
 

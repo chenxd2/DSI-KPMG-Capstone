@@ -95,7 +95,6 @@ class AutoLSTM():
         return agg
     
     
-    # modify 1
     def get_predict(self, timearray):
         pred_y_list = []
         true_y_list = []
@@ -179,7 +178,7 @@ class AutoLSTM():
         return pred_y_list, true_y_list
 
 
-    def run(self, timearray, use_target=True, lags=[], leads=[]): 
+    def run(self, use_target=True, lags=[], leads=[]): 
         ''' Run CNN
         
         Params
@@ -194,7 +193,6 @@ class AutoLSTM():
         scaler = MinMaxScaler(feature_range=(0, 1))
         scaled = scaler.fit_transform(self.data)
 
-        # modify 2
         self.scaler = scaler
         self.lags = lags
         self.leads = leads
@@ -203,9 +201,7 @@ class AutoLSTM():
         
         n = 1
 
-        for i in range(len(timearray)):
-
-            pred_begin_date = timearray[i]
+        for i in range(len(leads)):
             lag = lags[i]
             lead = leads[i]
 
@@ -217,24 +213,16 @@ class AutoLSTM():
 
             values = reframed.values
 
-            # modify 3
             self.values_24.append(values)
-
             self.n = n
 
-            test_date_begin = self.data.index.get_loc(pred_begin_date) - lag - lead + 1
-
-            train = values[:test_date_begin, :]
-            test = values[test_date_begin: test_date_begin+self.n, :]
-
+            train = values
 
             # split into input and outputs
             train_X, train_y = train[:, :-1], train[:, -1]
-            test_X, test_y = test[:, :-1], test[:, -1]
+
             # reshape input to be 3D [samples, timesteps, features]
             train_X = train_X.reshape((train_X.shape[0], 1, train_X.shape[1]))
-            test_X = test_X.reshape((test_X.shape[0], 1, test_X.shape[1]))
-            # print(train_X.shape, train_y.shape, test_X.shape, test_y.shape)
 
             # create and fit the LSTM network
             model = Sequential()
@@ -246,7 +234,7 @@ class AutoLSTM():
                 return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
             model.compile(optimizer='adam', loss=root_mean_squared_error)
             
-            result = model.fit(train_X, train_y, verbose=0, validation_data=(test_X, test_y), epochs=25, batch_size=72)
+            result = model.fit(train_X, train_y, verbose=0, epochs=25, batch_size=72)
             self.models.append(model)
             self.train_result = result
             
