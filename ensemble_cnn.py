@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[5]:
+
+
 import pandas as pd
 from pandas import concat
 import os
@@ -9,9 +15,8 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout, Flatten
 from keras import backend as K
 from keras.layers.convolutional import Conv2D, MaxPooling2D, AveragePooling2D
-
-
-
+import random
+import tensorflow as tf
 
 class AutoCNN():
     
@@ -95,7 +100,48 @@ class AutoCNN():
         return agg
     
 
-    def run(self, use_target=True, lags=[], leads=[]): 
+    def get_predict(self, forward=24):
+        pred_y_list = []
+
+        # get predict input
+        self.get_pred_data()
+
+        for i in range(forward):
+
+            model = self.models[i]
+            #values = self.values_24[i]
+
+            test_X = self.predX
+
+            # reshape input to be 3D [samples, timesteps, features]
+            #test_X = test_X.reshape((1, 1, len(test_X)))
+            test_X_reshaped = np.array(test_X).reshape(1, self.lags[i], self.n_features+1, 1)
+            pred_y = model.predict(test_X_reshaped)
+            
+            
+            test_X = test_X.reshape((1, 1, len(test_X)))
+            test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
+            pred_y = pred_y.reshape((len(pred_y), 1))
+
+            inv_yhat = np.concatenate((pred_y, test_X[:, 1:self.n_features+1]), axis=1)
+            inv_yhat = self.scaler.inverse_transform(inv_yhat)
+            inv_yhat = inv_yhat[:,0]
+            # invert scaling for actual
+
+            pred_y_list.append(inv_yhat[0])
+
+        return pred_y_list
+
+    
+    def get_pred_data(self):
+                # last reframed data for prediction input
+        reframed_predX = self.series_to_supervised(self.scaled, self.lags[0], self.leads[0], False, True)
+        reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - self.n_features, reframed_predX.shape[1])], axis=1, inplace=True)
+        reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - 1 - (self.leads[0] - 1) * (self.n_features + 1), reframed_predX.shape[1]-1)], axis=1, inplace=True)
+
+        self.predX = reframed_predX.iloc[-1,0:-1].values
+    
+    def run(self, timearray, use_target=True, lags=[], leads=[]): 
         def root_mean_squared_error(y_true, y_pred):
             return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
         self.models=[]
@@ -103,6 +149,7 @@ class AutoCNN():
         scaler = MinMaxScaler(feature_range=(0, 1))
         scaled = scaler.fit_transform(self.data)
         
+        self.scaled = scaled
         self.scaler = scaler
         self.leads=leads
         self.lags=lags
@@ -230,3 +277,4 @@ class AutoCNN():
             true_y_list.append(inv_y)
 
         return pred_y_list, true_y_list
+
