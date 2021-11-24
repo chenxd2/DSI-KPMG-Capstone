@@ -1,4 +1,7 @@
 # DSI-KPMG-Capstone
+## WEEK 12 Updates
+### Progress
+- 2nd report content: data & background & model brief recap, random forest prediction on binary model, FLOW CHART, Back testing and model performance visualization together with future prediction, next plan -> sector model
 
 ## WEEK 11 Updates
 ### Progress
