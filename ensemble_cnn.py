@@ -141,7 +141,7 @@ class AutoCNN():
 
         self.predX = reframed_predX.iloc[-1,0:-1].values
     
-    def run(self, timearray, use_target=True, lags=[], leads=[]): 
+    def run(self, use_target=True, lags=[], leads=[]): 
         def root_mean_squared_error(y_true, y_pred):
             return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
         self.models=[]
