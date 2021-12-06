@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[5]:
-
-
 import pandas as pd
 from pandas import concat
 import os
@@ -17,6 +11,8 @@ from keras import backend as K
 from keras.layers.convolutional import Conv2D, MaxPooling2D, AveragePooling2D
 import random
 import tensorflow as tf
+
+
 
 class AutoCNN():
     
@@ -83,6 +79,7 @@ class AutoCNN():
                     names += [('var%d(t+%d)' % (j+1, i)) for j in range(n_vars)]
             agg = concat(cols, axis=1)
             agg.columns = names
+            
         else:
             for i in range(n_in, 0, -1):
                 cols.append(df_without_target.shift(i))
@@ -102,12 +99,9 @@ class AutoCNN():
 
     def get_predict(self, forward=24):
         pred_y_list = []
-
-        # get predict input
-        self.get_pred_data(i)
-
-        for i in range(forward):
-
+        for i in range(len(self.lags)):
+            # get predict input
+            self.get_pred_data(i)
             model = self.models[i]
             #values = self.values_24[i]
 
@@ -117,7 +111,6 @@ class AutoCNN():
             #test_X = test_X.reshape((1, 1, len(test_X)))
             test_X_reshaped = np.array(test_X).reshape(1, self.lags[i], self.n_features+1, 1)
             pred_y = model.predict(test_X_reshaped)
-            
             
             test_X = test_X.reshape((1, 1, len(test_X)))
             test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
@@ -133,7 +126,7 @@ class AutoCNN():
         return pred_y_list
 
     
-    defdef get_pred_data(self,i):
+    def get_pred_data(self,i):
                 # last reframed data for prediction input
         reframed_predX = self.series_to_supervised(self.scaled, self.lags[i], self.leads[0], False, True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - self.n_features, reframed_predX.shape[1])], axis=1, inplace=True)
@@ -275,6 +268,4 @@ class AutoCNN():
 
             pred_y_list.append(inv_yhat)
             true_y_list.append(inv_y)
-
         return pred_y_list, true_y_list
-
