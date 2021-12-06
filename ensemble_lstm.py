@@ -2,10 +2,9 @@ import pandas as pd
 from pandas import concat
 import os
 import numpy as np
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten, LSTM
+from keras.layers import Dense, Dropout, LSTM
 from keras import backend as K
 
 
@@ -45,7 +44,6 @@ class AutoLSTM():
         
         #set attributes
         self.data = data
- 
         self.n = 0
         self.df_result = 0
         self.lag = 0
@@ -59,6 +57,7 @@ class AutoLSTM():
     def print_date_range(self):
         #Print Range of Date column
         print('Date Range: ', self.data_backup['Date'].iloc[0], '--', self.data_backup['Date'].iloc[-1])
+    
     
     # convert series to supervised learning
     def series_to_supervised(self, data, n_in=1, n_out=1, dropnan=True, if_target=True):
@@ -98,10 +97,9 @@ class AutoLSTM():
     def get_predict(self, forward=24):
         pred_y_list = []
 
-        # get predict input
-        self.get_pred_data()
-
         for i in range(forward):
+            # get predict input
+            self.get_pred_data(i)
 
             model = self.models[i]
             #values = self.values_24[i]
@@ -156,9 +154,9 @@ class AutoLSTM():
         return pred_y_list, true_y_list
 
 
-    def get_pred_data(self):
+    def get_pred_data(self, i):
                 # last reframed data for prediction input
-        reframed_predX = self.series_to_supervised(self.scaled, self.lags[0], self.leads[0], False, True)
+        reframed_predX = self.series_to_supervised(self.scaled, self.lags[i], self.leads[0], False, True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - self.n_features, reframed_predX.shape[1])], axis=1, inplace=True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - 1 - (self.leads[0] - 1) * (self.n_features + 1), reframed_predX.shape[1]-1)], axis=1, inplace=True)
 
