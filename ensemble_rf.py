@@ -121,9 +121,9 @@ class AutoRF():
             agg.dropna(inplace=True)
         return agg
     
-    def get_pred_data(self):
+    def get_pred_data(self, i):
                 # last reframed data for prediction input
-        reframed_predX = self.series_to_supervised(self.data, self.lags[0], self.leads[0], False, False)
+        reframed_predX = self.series_to_supervised(self.data, self.lags[i], self.leads[0], False, False)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - self.n_features, reframed_predX.shape[1])], axis=1, inplace=True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - 1 - (self.leads[0] - 1) * (self.n_features + 1), reframed_predX.shape[1]-1)], axis=1, inplace=True)
 
@@ -133,11 +133,10 @@ class AutoRF():
     def get_predict(self, forward=24):
         pred_y_list = []
 
-        # get predict input
-        self.get_pred_data()
-
         for i in range(forward):
-
+            # get predict input
+            self.get_pred_data(i)
+            
             model = self.models[i]
             #values = self.values_24[i]
 
