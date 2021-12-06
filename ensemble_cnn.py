@@ -104,7 +104,7 @@ class AutoCNN():
         pred_y_list = []
 
         # get predict input
-        self.get_pred_data()
+        self.get_pred_data(i)
 
         for i in range(forward):
 
@@ -133,9 +133,9 @@ class AutoCNN():
         return pred_y_list
 
     
-    def get_pred_data(self):
+    defdef get_pred_data(self,i):
                 # last reframed data for prediction input
-        reframed_predX = self.series_to_supervised(self.scaled, self.lags[0], self.leads[0], False, True)
+        reframed_predX = self.series_to_supervised(self.scaled, self.lags[i], self.leads[0], False, True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - self.n_features, reframed_predX.shape[1])], axis=1, inplace=True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - 1 - (self.leads[0] - 1) * (self.n_features + 1), reframed_predX.shape[1]-1)], axis=1, inplace=True)
 
