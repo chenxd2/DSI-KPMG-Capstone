@@ -1,4 +1,11 @@
 # DSI-KPMG-Capstone
+
+## WEEK 13 Updates
+### Plans
+- add data ingestion pipeline and data source comment to the ensemble_backtesting ipynb
+- add specific forecasting for certain history events
+
+
 ## WEEK 12 Updates
 ### Progress
 - 2nd report content: data & background & model brief recap, random forest prediction on binary model, FLOW CHART, Back testing and model performance visualization together with future prediction, next plan -> sector model
