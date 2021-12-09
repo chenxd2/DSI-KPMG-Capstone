@@ -80,13 +80,6 @@ class AutoRF():
         dataset.insert(0, 'IsExpanding', is_expanding)
         return dataset
     
-    def print_date_range(self):
-        #Print Range of Date column
-        print('Date Range: ', self.data_backup['Date'].iloc[0], '--', self.data_backup['Date'].iloc[-1])
-    
-    # convert series to supervised learning
-
-    
     
     def series_to_supervised(self, data, n_in=1, n_out=1, dropnan=True, if_target=True):
         n_vars = 1 if type(data) is list else data.shape[1]
@@ -123,41 +116,37 @@ class AutoRF():
     
     def get_pred_data(self, i, last_month):
         index_num = self.data.index.get_loc(last_month)
+
+        
         # last reframed data for prediction input
         reframed_predX = self.series_to_supervised(self.data, self.lags[i], self.leads[0], False, False)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - self.n_features, reframed_predX.shape[1])], axis=1, inplace=True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - 1 - (self.leads[0] - 1) * (self.n_features + 1), reframed_predX.shape[1]-1)], axis=1, inplace=True)
-
+        
+        self.truey = reframed_predX.iloc[int(index_num.start)+1:int(index_num.start)+25, -1].values
         self.predX = reframed_predX.iloc[index_num,0:-1].values
-    
     
     def get_predict(self, last_month, forward=24):
         pred_y_list = []
-
+        
         for i in range(forward):
             
             self.get_pred_data(i, last_month)
             model = self.models[i]
-            #values = self.values_24[i]
+            
 
             test_X = self.predX
-
+            #true_y = self.truey
+            #true_y_list.append(true_y)
+            
             # reshape input to be 3D [samples, timesteps, features]
             test_X = test_X.reshape((1, test_X.shape[1]))
             
             pred_y = model.predict(test_X)
 
-            #test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
-            #pred_y = pred_y.reshape((len(pred_y), 1))
-
-            #inv_yhat = np.concatenate((pred_y, test_X[:, 1:self.n_features+1]), axis=1)
-            #inv_yhat = self.scaler.inverse_transform(inv_yhat)
-            #inv_yhat = inv_yhat[:,0]
-            # invert scaling for actual
-
             pred_y_list.append(pred_y[0])
-
-        return pred_y_list
+        true_y_list = self.truey
+        return pred_y_list, true_y_list
     
 
     def get_backtesting(self):
@@ -197,6 +186,7 @@ class AutoRF():
         
         
         self.data = self.preprocess(self.data)
+        #print(self.data.columns)
         self.data.drop('SP500-EPS-Index', axis=1, inplace=True)
         self.data.dropna(inplace = True)
         
