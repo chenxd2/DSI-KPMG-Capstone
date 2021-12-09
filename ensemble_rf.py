@@ -36,14 +36,14 @@ class AutoRF():
     
     
     
-    def __init__(self, data_name, target_name, drop_cols=['Date']):   
+    def __init__(self, data_name, target_name):   
         #import data
         curr_path = os.getcwd()
         input_path = os.path.join(curr_path, data_name)
         data = pd.read_excel(input_path, index_col=0)
         
         #drop columns and na
-        data.drop(drop_cols, axis=1, inplace=True)
+        #data.drop(drop_cols, axis=1, inplace=True)
         data.dropna(inplace = True)
         # data.reset_index(drop=True, inplace=True)
         
@@ -121,29 +121,29 @@ class AutoRF():
             agg.dropna(inplace=True)
         return agg
     
-    def get_pred_data(self, i):
-                # last reframed data for prediction input
+    def get_pred_data(self, i, last_month):
+        index_num = self.data.index.get_loc(last_month)
+        # last reframed data for prediction input
         reframed_predX = self.series_to_supervised(self.data, self.lags[i], self.leads[0], False, False)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - self.n_features, reframed_predX.shape[1])], axis=1, inplace=True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - 1 - (self.leads[0] - 1) * (self.n_features + 1), reframed_predX.shape[1]-1)], axis=1, inplace=True)
 
-        self.predX = reframed_predX.iloc[-1,0:-1].values
+        self.predX = reframed_predX.iloc[index_num,0:-1].values
     
     
-    def get_predict(self, forward=24):
+    def get_predict(self, last_month, forward=24):
         pred_y_list = []
 
         for i in range(forward):
-            # get predict input
-            self.get_pred_data(i)
             
+            self.get_pred_data(i, last_month)
             model = self.models[i]
             #values = self.values_24[i]
 
             test_X = self.predX
 
             # reshape input to be 3D [samples, timesteps, features]
-            test_X = test_X.reshape((1, len(test_X)))
+            test_X = test_X.reshape((1, test_X.shape[1]))
             
             pred_y = model.predict(test_X)
 
@@ -230,33 +230,3 @@ class AutoRF():
             result = model.fit(train_X, train_y)
             self.models.append(model)
             self.train_result = result
-
-        #     pred_y = self.model.predict(test_X)
-
-        #     # reverse standardization
-        #     #test_X = test_X.reshape((test_X.shape[0], 1, test_X.shape[1]))
-
-        #     # invert scaling for forecast
-        #     #test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
-        #     #pred_y = pred_y.reshape((len(pred_y), 1))
-
-        #     # invert scaling for actual
-
-        #     #test_y = test_y.reshape((len(test_y), 1))
-
-        #     pred_y_list.extend(pred_y)
-        #     true_y_list.extend(test_y)
-        
-        # print(pred_y_list)
-        # print(true_y_list)
-        # df_result = pd.DataFrame(pred_y_list, columns=[self.target + '_pred'])
-        # df_result[self.target] = true_y_list
-        # df_result['Date'] = timearray
-        # df_result.set_index(['Date'],inplace=True)
-        # self.df_result=df_result
-
-        
-        #####################
-        #self.train_X = train_X
-        #self.train_y = train_y
-
