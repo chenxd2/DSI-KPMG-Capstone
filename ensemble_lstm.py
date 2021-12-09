@@ -31,19 +31,21 @@ class AutoLSTM():
     target_name: str, name of target variable
     drop_cols: list of strings, names of columns to drop
     '''
-    def __init__(self, data_name, target_name, drop_cols=['Date']):   
+    def __init__(self, data_name, target_name):   
         #import data
         curr_path = os.getcwd()
         input_path = os.path.join(curr_path, data_name)
+
+        #set date as index column
         data = pd.read_excel(input_path, index_col=0)
-        
-        #drop columns and na
-        data.drop(drop_cols, axis=1, inplace=True)
+ 
+        # data.drop(drop_cols, axis=1, inplace=True)
         data.dropna(inplace = True)
         # data.reset_index(drop=True, inplace=True)
         
         #set attributes
         self.data = data
+ 
         self.n = 0
         self.df_result = 0
         self.lag = 0
@@ -94,12 +96,12 @@ class AutoLSTM():
         return agg
     
     
-    def get_predict(self, forward=24):
+    def get_predict(self, last_month, forward=24):
         pred_y_list = []
 
         for i in range(forward):
             # get predict input
-            self.get_pred_data(i)
+            self.get_pred_data(i, last_month)
 
             model = self.models[i]
             #values = self.values_24[i]
@@ -107,7 +109,7 @@ class AutoLSTM():
             test_X = self.predX
 
             # reshape input to be 3D [samples, timesteps, features]
-            test_X = test_X.reshape((1, 1, len(test_X)))
+            test_X = test_X.reshape((1, 1, test_X.shape[1]))
             
             pred_y = model.predict(test_X)
 
@@ -154,13 +156,15 @@ class AutoLSTM():
         return pred_y_list, true_y_list
 
 
-    def get_pred_data(self, i):
-                # last reframed data for prediction input
+    def get_pred_data(self, i, last_month):
+        index_num = self.data.index.get_loc(last_month)
+
+        # last reframed data for prediction input
         reframed_predX = self.series_to_supervised(self.scaled, self.lags[i], self.leads[0], False, True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - self.n_features, reframed_predX.shape[1])], axis=1, inplace=True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - 1 - (self.leads[0] - 1) * (self.n_features + 1), reframed_predX.shape[1]-1)], axis=1, inplace=True)
 
-        self.predX = reframed_predX.iloc[-1,0:-1].values
+        self.predX = reframed_predX.iloc[index_num,0:-1].values
 
 
     def run(self, use_target=True, lags=[], leads=[]): 
