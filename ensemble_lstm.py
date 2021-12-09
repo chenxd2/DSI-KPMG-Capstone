@@ -1,11 +1,22 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[5]:
+
+
 import pandas as pd
 from pandas import concat
 import os
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.metrics import mean_squared_error
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, LSTM
+from keras.layers import Dense, Dropout, Flatten, LSTM
 from keras import backend as K
+
+import tensorflow as tf
+
 
 
 class AutoLSTM():
@@ -59,7 +70,6 @@ class AutoLSTM():
     def print_date_range(self):
         #Print Range of Date column
         print('Date Range: ', self.data_backup['Date'].iloc[0], '--', self.data_backup['Date'].iloc[-1])
-    
     
     # convert series to supervised learning
     def series_to_supervised(self, data, n_in=1, n_out=1, dropnan=True, if_target=True):
@@ -123,7 +133,7 @@ class AutoLSTM():
 
             pred_y_list.append(inv_yhat[0])
 
-        return pred_y_list
+        return pred_y_list, self.truey
 
 
     def get_backtesting(self):
@@ -158,7 +168,7 @@ class AutoLSTM():
 
     def get_pred_data(self, i, last_month):
         index_num = self.data.index.get_loc(last_month)
-
+        self.truey = self.data.iloc[int(index_num.start)+1:int(index_num.start)+25,0].values
         # last reframed data for prediction input
         reframed_predX = self.series_to_supervised(self.scaled, self.lags[i], self.leads[0], False, True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - self.n_features, reframed_predX.shape[1])], axis=1, inplace=True)

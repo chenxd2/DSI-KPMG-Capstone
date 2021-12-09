@@ -2,6 +2,8 @@
 # coding: utf-8
 
 
+
+
 import pandas as pd
 from pandas import concat
 import os
@@ -102,12 +104,13 @@ class AutoCNN():
 
     def get_predict(self, last_month, forward=24):
         pred_y_list = []
+        
         for i in range(len(self.lags)):
             # get predict input
             self.get_pred_data(i, last_month)
             model = self.models[i]
             #values = self.values_24[i]
-
+            
             test_X = self.predX
 
             # reshape input to be 3D [samples, timesteps, features]
@@ -116,29 +119,33 @@ class AutoCNN():
             
             test_X = test_X.reshape((1, 1, test_X.shape[1]))
             test_X = test_X.reshape((test_X.shape[0], test_X.shape[2]))
+            
             pred_y = pred_y.reshape((len(pred_y), 1))
 
             inv_yhat = np.concatenate((pred_y, test_X[:, 1:self.n_features+1]), axis=1)
             inv_yhat = self.scaler.inverse_transform(inv_yhat)
             inv_yhat = inv_yhat[:,0]
+
             # invert scaling for actual
-
+            
             pred_y_list.append(inv_yhat[0])
-
-        return pred_y_list
+            
+        return pred_y_list, self.truey
 
     
     def get_pred_data(self, i, last_month):
         
         index_num = self.data.index.get_loc(last_month)
+        self.truey = self.data.iloc[int(index_num.start)+1:int(index_num.start)+25,0].values
         
         # last reframed data for prediction input
-        reframed_predX = self.series_to_supervised(self.scaled, self.lags[i], self.leads[0], False, True)
+        reframed_predX = self.series_to_supervised(self.scaled, self.lags[i], self.leads[i], False, True)
         reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - self.n_features, reframed_predX.shape[1])], axis=1, inplace=True)
-        reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - 1 - (self.leads[0] - 1) * (self.n_features + 1), reframed_predX.shape[1]-1)], axis=1, inplace=True)
-
+        reframed_predX.drop(reframed_predX.columns[range(reframed_predX.shape[1] - 1 - (self.leads[i] - 1) * (self.n_features + 1), reframed_predX.shape[1]-1)], axis=1, inplace=True)
         self.predX = reframed_predX.iloc[index_num,0:-1].values
-    
+        
+        
+        
     def run(self, use_target=True, lags=[], leads=[]): 
         def root_mean_squared_error(y_true, y_pred):
             return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
