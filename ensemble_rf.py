@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
 import pandas as pd
 from pandas import concat
 import os
@@ -9,59 +15,64 @@ from sklearn.ensemble import RandomForestClassifier
 from scipy.signal import argrelextrema
 from sklearn.metrics import confusion_matrix
 
-class AutoRF():
-    '''
-    Auto Random Forest model
 
-    Attributes:
-        self.data:         pandas.DataFrame --  the main dataset worked on
-        self.n:            int -- length (unit in months) of target to predict
-        self.target:       str -- name of target variable
-        self.n_features:   int -- num of features to use
-        self.truey:        list -- a list containing the true target variable
-        self.predX:        pandas.DataFrame -- a dataframe containing the predictors for the model
-        self.lags:         list -- each element in the list represents the num of months back used by the correspondin model
-        self.values_24:    list -- a list of length 24, containing the reshaped values of self.series_to_supervised
-        self.models:       list -- a list of lenght 24, containing models of different leads
-        self.train_result: list -- the fit() result of models of different leads
+# In[147]:
+
+
+class AutoRF():
+    
+    
+    '''
+    Random Forest Model
+
+    Attributes
+    ----------
+    self.data: dataframe, the main dataset worked on
+    self.n_features: int, number of features
+    self.lags: list of length 24, length of past months used to predict the target for each model
+    self.leads: list of length 24, representing month predicted forward by each model
+    self.models: list of length 24, each entry is a trained model with different lead (from 1 to 24)
+    self.predX: dataframe, produced in get_pred_data(), used in get_predict()
+    self.truey: list, produced in get_pred_data(), used in get_predict()
+    self.scaler: scaler, a fitted minmax-scaler
+    self.scaled: array, scaled self.data
+    self.values_24: list of length 24，
+    
+    Params
+    ----------
+    data_name: str, name of the dataset.
+    target_name: str, name of target variable.
     '''
     
-    def __init__(self, data_name, target_name):  
-        '''
-        Initiate the class
-
-        Input:
-            data_name:   str -- name of the dataset. Notice the input dataset must contain a column named 'Date'
-            target_name: str --  name of target variable
-        '''
-
+    def __init__(self, data_name, target_name):   
         #import data
         curr_path = os.getcwd()
         input_path = os.path.join(curr_path, data_name)
         data = pd.read_excel(input_path, index_col=0)
         
         #drop columns and na
+        #data.drop(drop_cols, axis=1, inplace=True)
         data.dropna(inplace = True)
+        # data.reset_index(drop=True, inplace=True)
         
         #set attributes
         self.data = data
-        self.n = 0
-        self.rmse = 0
-        self.target = target_name
         self.n_features = len(data.columns) - 1
-
-
+        
+    '''
+    preprocess()
+    generate varaible 'IsExpanding' based on the business cycle of target variable
+    
+    Params
+    ----------
+    dataset: dataframe, the original dataframe
+    
+    Return
+    ----------
+    dataset: dataframe, the dataset with a new 'IsExpanding' column
+    '''
+    
     def preprocess(self, dataset):
-        '''
-        Preprocess the training dataset. Add 'IsExpanding' column to the training dataset as the target variable 
-        for the model based on calculated local min and max.
-
-        Input:
-            dataset:   pandas.DataFrame -- training dataset
-
-        Output:
-            dataset:   pandas.DataFrame -- same dataset with an extra 'IsExpanding' colum
-        '''
         ilocs_min = argrelextrema(dataset['SP500-EPS-Index'].values, np.less_equal, mode = 'wrap', order = 12)[0]
         ilocs_max = argrelextrema(dataset['SP500-EPS-Index'].values, np.greater_equal, mode = 'wrap', order = 12)[0]
         
@@ -82,21 +93,25 @@ class AutoRF():
         dataset.insert(0, 'IsExpanding', is_expanding)
         return dataset
     
+    '''
+    series_to_supervised()
+    the function takes a time series and frames it as a supervised learning dataset.
+    Modified from: https://machinelearningmastery.com/convert-time-series-supervised-learning-problem-python/
     
+    Params
+    ----------
+    data: dataframe, the input time series dataset
+    n_in: int, number of month to include backward for each row in the output dataframe
+    n_out: int, number of month to include forward for each row in the output dataframe
+    dropnan: boolean, whether to drop rows include nan
+    if_target: boolean, whether to include target itself as a feature
+    
+    Return
+    ----------
+    agg: dataframe, the dataset after reframed
+    '''
+        
     def series_to_supervised(self, data, n_in=1, n_out=1, dropnan=True, if_target=True):
-        '''
-        Convert the dataset into a rolling window for the supervised learning.
-
-        Input:
-            data:      pandas.DataFrame -- training dataset
-            n_in:      int, default=1 -- number of month to be converted into one rolling window
-            n_out:     int, default=1 -- number of month in the future as the target variable for the rolling windows
-            dropnan:   bool, default=True -- whether to drop nan values in the rolling windows
-            if_target: bool, default=True -- whether to include target variable as a predictor in the rolling windows
-
-        Output:
-            agg:       pandas.DataFrame -- rolling windows of the same length concatenated into one single DataFrame
-        ''' 
         n_vars = 1 if type(data) is list else data.shape[1]
         df = pd.DataFrame(data)
         df_without_target = df.loc[:, df.columns[1:]]
@@ -129,16 +144,18 @@ class AutoRF():
             agg.dropna(inplace=True)
         return agg
     
-
+    
+    '''
+    get_pred_data()
+    Produce self.predX and self.truey
+    
+    Params
+    ----------
+    i: int, representing the lead of the current model
+    last_month: str, the month before the first month you want to predict
+        For example, enter '2020-10'then the prediction will begin from 2020-11
+    ''' 
     def get_pred_data(self, i, last_month):
-        '''
-        Helper function to store the true target variables and training data to the class
-
-        Input:
-            i:              int -- specifies which lag to use
-            last_month:     datetime64 -- the last month of the training data plus one month to retrieve 
-                                          the true target variable
-        '''
         index_num = self.data.index.get_loc(last_month)
 
         
@@ -150,21 +167,21 @@ class AutoRF():
         self.truey = reframed_predX.iloc[int(index_num.start)+1:int(index_num.start)+25, -1].values
         self.predX = reframed_predX.iloc[index_num,0:-1].values
     
-
+    '''
+    get_predict()
+    Get future prediction of the target
+    
+    Params
+    last_month: str, the month before the first month you want to predict. 
+        For example, enter '2020-10'then the prediction will begin from 2020-11
+    ----------
+    
+    Return
+    pred_y_list: list of length 24, the predicted target value
+    self.truey: list of length 24, the corresponding true target value, if exist
+    ----------
+    '''    
     def get_predict(self, last_month, forward=24):
-        '''
-        Get the prediction result and the true target variable from the model
-
-        Input:
-            last_month:     datetime64 -- the last month of the training data plus one month to retrieve 
-                                          the true target variable
-            forward:        int, default=24 -- number of months in the future to predict
-
-        Output:
-            pred_y_list:    list -- a list containing the predicted target variable from the model
-            true_y_list:    list -- a list containing the true target variable from the training dataset
-        '''
-
         pred_y_list = []
         
         for i in range(forward):
@@ -172,9 +189,8 @@ class AutoRF():
             self.get_pred_data(i, last_month)
             model = self.models[i]
             
+
             test_X = self.predX
-            
-            # reshape input to be 3D [samples, timesteps, features]
             test_X = test_X.reshape((1, test_X.shape[1]))
             
             pred_y = model.predict(test_X)
@@ -183,19 +199,16 @@ class AutoRF():
         true_y_list = self.truey
         return pred_y_list, true_y_list
     
-
+    '''
+    get_backtesting()
+    conduct backtesting using all of the 24 trained models
+    
+    Return
+    pred_y_list: array, the predicted target value of all period for the 24 models
+    true_y_list: array, the corresponding true target value for the 24 models
+    ----------
+    '''      
     def get_backtesting(self):
-        '''
-        Specific funciton for backtesting purpose only
-
-        Input:
-            None
-
-        Output:
-            pred_y_list:    list -- a list containing the predicted target variable from the model
-            true_y_list:    list -- a list containing the true target variable from the training dataset
-        '''
-
         pred_y_list = []
         true_y_list = []
 
@@ -211,16 +224,18 @@ class AutoRF():
 
         return pred_y_list, true_y_list
 
+    '''
+    run()
+    Train models
+    
+    Params
+    use_target: boolean, whether to use target itself when training models
+    lags: list of length 24, representing the lag used in each model
+    leads: list of length 24, usually range(1,25), representing the leads for each model
+    ----------
 
-    def run(self, lags, leads):
-        ''' 
-        Run Random Forest
-        
-        Input:    
-            lags:        list -- each element in the list represents the num of months back used by the correspondin model                   
-            leads:       list -- the length of the list represents the num of months forward the model is trying to predict,
-                                 starting from 1 
-        '''
+    '''
+    def run(self, lags=[], leads=[]):
 
         self.lags = lags
         self.leads = leads
@@ -228,7 +243,7 @@ class AutoRF():
         self.models = []
 
         n = 1
-        
+
         self.data = self.preprocess(self.data)
         self.data.drop('SP500-EPS-Index', axis=1, inplace=True)
         self.data.dropna(inplace = True)
@@ -252,13 +267,9 @@ class AutoRF():
             # split into input and outputs
             train_X, train_y = train[:, :-1], train[:, -1]
 
-            # create and fit the LSTM network
+            # create and fit the RF
             model = RandomForestClassifier(max_depth=5)
 
             result = model.fit(train_X, train_y)
             self.models.append(model)
-            self.train_result = result
-
-
-
 

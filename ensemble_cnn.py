@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-
+# In[3]:
 
 
 import pandas as pd
@@ -23,26 +23,27 @@ import tensorflow as tf
 class AutoCNN():
     
     '''
-    Vector Autoregression model
+    CNN Model
 
     Attributes
     ----------
-    self.data_backup: dataframe, a backup copy of the input dataset
     self.data: dataframe, the main dataset worked on
-    self.n: int, length (unit in months) of target to predict
-    self.df_result: dataframe, stores the predicted target and the true target
-    self.lag: int, number of past months used to predict the target
-    self.rmse: rounded RMSE of the prediction
-    self.target: str, name of target variable
-    self.model: record a CNN trained model
-    self.train_result: record model fit result loss
+    self.n_features: int, number of features
+    self.lags: list of length 24, length of past months used to predict the target for each model
+    self.leads: list of length 24, representing month predicted forward by each model
+    self.models: list of length 24, each entry is a trained model with different lead (from 1 to 24)
+    self.predX: dataframe, produced in get_pred_data(), used in get_predict()
+    self.truey: list, produced in get_pred_data(), used in get_predict()
+    self.scaler: scaler, a fitted minmax-scaler
+    self.scaled: array, scaled self.data
+    self.values_24: list of length 24，
     
     Params
     ----------
-    data_name: str, name of the dataset. Notice the input dataset must contain a column named 'Date'
-    target_name: str, name of target variable
-    drop_cols: list of strings, names of columns to drop
+    data_name: str, name of the dataset.
+    target_name: str, name of target variable.
     '''
+    
     def __init__(self, data_name, target_name):   
         #import data
         curr_path = os.getcwd()
@@ -51,27 +52,35 @@ class AutoCNN():
         
         #drop nan
         data.dropna(inplace = True)
-        # data.reset_index(drop=True, inplace=True)
         
         #set attributes
         self.data = data
-        self.n = 1
-        self.df_result = 0
-        self.lag = 0
-        self.column_name = []
-        self.rmse = 0
-        self.target = target_name
         self.n_features = len(data.columns) - 1
-        self.model = 0
-        self.train_result = 0
-        self.y_p=[]
-        self.y_t=[]
         
+    '''
+    series_to_supervised()
+    the function takes a time series and frames it as a supervised learning dataset.
+    Modified from: https://machinelearningmastery.com/convert-time-series-supervised-learning-problem-python/
+    
+    Params
+    ----------
+    data: dataframe, the input time series dataset
+    n_in: int, number of month to include backward for each row in the output dataframe
+    n_out: int, number of month to include forward for each row in the output dataframe
+    dropnan: boolean, whether to drop rows include nan
+    if_target: boolean, whether to include target itself as a feature
+    
+    Return
+    ----------
+    agg: dataframe, the dataset after reframed
+    '''
+    
     def series_to_supervised(self, data, n_in=1, n_out=1, dropnan=True, if_target=True):
         n_vars = 1 if type(data) is list else data.shape[1]
         df = pd.DataFrame(data)
         df_without_target = df.loc[:, df.columns[1:]]
         cols, names = list(), list()
+        
         if if_target:
             for i in range(n_in, 0, -1):
                 cols.append(df.shift(i))
@@ -101,15 +110,27 @@ class AutoCNN():
             agg.dropna(inplace=True)
         return agg
     
-
-    def get_predict(self, last_month, forward=24):
+    '''
+    get_predict()
+    Get future prediction of the target
+    
+    Params
+    last_month: str, the month before the first month you want to predict. 
+        For example, enter '2020-10'then the prediction will begin from 2020-11
+    ----------
+    
+    Return
+    pred_y_list: list of length 24, the predicted target value
+    self.truey: list of length 24, the corresponding true target value, if exist
+    ----------
+    '''    
+    def get_predict(self, last_month):
         pred_y_list = []
         
         for i in range(len(self.lags)):
             # get predict input
             self.get_pred_data(i, last_month)
             model = self.models[i]
-            #values = self.values_24[i]
             
             test_X = self.predX
 
@@ -127,14 +148,23 @@ class AutoCNN():
             inv_yhat = inv_yhat[:,0]
 
             # invert scaling for actual
-            
             pred_y_list.append(inv_yhat[0])
             
         return pred_y_list, self.truey
 
+    '''
+    get_pred_data()
+    Produce self.predX and self.truey
     
+    Params
+    ----------
+    i: int, representing the lead of the current model
+    last_month: str, the month before the first month you want to predict
+        For example, enter '2020-10'then the prediction will begin from 2020-11
+    ''' 
     def get_pred_data(self, i, last_month):
         
+        # find true y in the corresponding period
         index_num = self.data.index.get_loc(last_month)
         self.truey = self.data.iloc[int(index_num.start)+1:int(index_num.start)+25,0].values
         
@@ -145,59 +175,59 @@ class AutoCNN():
         self.predX = reframed_predX.iloc[index_num,0:-1].values
         
         
-        
+    '''
+    run()
+    Train models
+    
+    Params
+    use_target: boolean, whether to use target itself when training models
+    lags: list of length 24, representing the lag used in each model
+    leads: list of length 24, usually range(1,25), representing the leads for each model
+    ----------
+
+    '''
     def run(self, use_target=True, lags=[], leads=[]): 
+        
+        # RMSE metirc
         def root_mean_squared_error(y_true, y_pred):
             return K.sqrt(K.mean(K.square(y_pred - y_true), axis=-1))
+        
+        #create attribute
         self.models=[]
         self.values_24=[]
-        scaler = MinMaxScaler(feature_range=(0, 1))
-        scaled = scaler.fit_transform(self.data)
-        
-        self.scaled = scaled
-        self.scaler = scaler
         self.leads=leads
         self.lags=lags
         
+        #scaling
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        scaled = scaler.fit_transform(self.data)
+        
+        #store scaler and scaled dataset
+        self.scaled = scaled
+        self.scaler = scaler
+
+        
         pred_y_list = []
-        true_y_list = []
-        n = 1
-        n_loop = 1
+        true_y_list = []       
+        #train the 24 models respectively
         for i in range(len(lags)):
-            #pred_begin_date = timearray[i]
             lag = lags[i]
             lead = leads[i]
+            
+            #get reframed dataset
             reframed = self.series_to_supervised(scaled, lag, lead, True, use_target)
+            #drop columns not needed
             reframed.drop(reframed.columns[range(reframed.shape[1] - self.n_features, reframed.shape[1])], axis=1, inplace=True)
             reframed.drop(reframed.columns[range(reframed.shape[1] - 1 - (lead - 1) * (self.n_features + 1), reframed.shape[1]-1)], axis=1, inplace=True)
-        
+            #store the finalized dataset
             values = reframed.values
             self.values_24.append(values)
             
-            #self.n = 1
-
-            #test_date_begin = self.data.index.get_loc(pred_begin_date) - lag - lead + 1
-            #train = values[:test_date_begin, :]
-            #test = values[test_date_begin: test_date_begin+self.n, :]
-
-            # split into input and outputs
-            #train_X, train_y = train[:, :-1], train[:, -1]
-            #test_X, test_y = test[:, :-1], test[:, -1]
-            
-            
+            #define X, y and reshape X for CNN input
             X, y= values[:,:-1], values[:,-1]
             X_reshaped = np.array(X).reshape(len(X), lag, self.n_features+1, 1)
-            # reshape data and normalize data
-            #if use_target:
-               # features  = self.n_features+1
-                #train_X_reshaped = np.array(train_X).reshape(len(train_X), lag, self.n_features+1, 1)
-                #test_X_reshaped = np.array(test_X).reshape(len(test_X), lag, self.n_features+1, 1)
-            #else:
-               # features = self.n_features
-               # train_X_reshaped = np.array(train_X).reshape(len(train_X), lag, self.n_features, 1)
-               # test_X_reshaped = np.array(test_X).reshape(len(test_X), lag, self.n_features, 1)            
 
-            #build CNN model
+            #build CNN model and fit
             model = Sequential()
             model.add(Conv2D(filters = 32, 
                              input_shape = ((lag, self.n_features+1, 1)),
@@ -205,79 +235,58 @@ class AutoCNN():
                              kernel_size=(2,2), 
                              strides=(1,1),   
                              activation='relu'))
-            #model.add(MaxPooling2D(pool_size=(2, 1)))
-            #model.add(AveragePooling2D(pool_size=(2,1)))
             model.add(Flatten())
             model.add(Dense(45, activation='relu'))
             model.add(Dense(1))
             model.compile(optimizer='adam', loss=root_mean_squared_error)
             result = model.fit(X_reshaped, y, verbose=0, epochs=20) 
+            
+            #store the model
             self.models.append(model)
             
-            '''
-            inv_yhat_list=[]
-            for j in range(n_loop):
-                result = model.fit(train_X_reshaped, train_y, verbose=0, validation_data=(test_X_reshaped, test_y), epochs=20,shuffle=False)      
-                pred_y = model.predict(test_X_reshaped)
-                pred_y = pred_y.reshape((len(pred_y), 1))
-        
-                if use_target:
-                    inv_yhat = np.concatenate((pred_y, test_X[:, 1:features]), axis=1)
-                else:
-                    inv_yhat = np.concatenate((pred_y, test_X[:, :features]), axis=1)
-        
-                inv_yhat = scaler.inverse_transform(inv_yhat)
-                inv_yhat = inv_yhat[:,0]
-                inv_yhat_list.append(inv_yhat)
-            pred_y_list.append(np.average(inv_yhat_list))
             
-            # invert scaling for actual
-            test_y = test_y.reshape((len(test_y), 1))
-            inv_y = np.concatenate((test_y, test_X[:, 1:self.n_features+1]), axis=1)
-            inv_y = scaler.inverse_transform(inv_y)
-            inv_y = inv_y[:,0]
-            true_y_list.append(inv_y[0])
-            
-        df_result = pd.DataFrame(pred_y_list, columns=[self.target + '_pred'])
-        df_result[self.target] = true_y_list
-        df_result['Date'] = timearray
-        df_result.set_index(['Date'],inplace=True)
-        self.df_result=df_result
-        
-        # calculate RMSE
-        rmse = np.sqrt(mean_squared_error(pred_y_list, true_y_list))
-        print('Test RMSE: %.3f' % rmse)
-        self.rmse = round(rmse,2)  
-        '''
-            
+    '''
+    get_backtesting()
+    conduct backtesting using all of the 24 trained models
+    
+    Return
+    pred_y_list: array, the predicted target value of all period for the 24 models
+    true_y_list: array, the corresponding true target value for the 24 models
+    ----------
+    '''      
     def get_backtesting(self):
         pred_y_list = []
         true_y_list = []
-
+        
+        # use each model for backtesting
         for i in range(len(self.leads)):
+            
+            #pick model
             model = self.models[i]
+            
+            #pick X and reshape
             value = self.values_24[i]
             train_X, train_y = value[:, :-1], value[:, -1]
-            
             train_X_reshape = np.array(train_X).reshape(len(train_X), self.lags[i], self.n_features+1, 1)
             
-            
+            #predict
             pred_y = model.predict(train_X_reshape)
+            
+            # invert scaling for actual
             pred_y = pred_y.reshape((len(pred_y), 1))
-
             train_X = train_X.reshape((train_X.shape[0], 1, train_X.shape[1]))
             train_X = train_X.reshape((train_X.shape[0], train_X.shape[2]))        
             inv_yhat = np.concatenate((pred_y, train_X[:, 1:self.n_features+1]), axis=1)
             inv_yhat = self.scaler.inverse_transform(inv_yhat)
             inv_yhat = inv_yhat[:,0]
-            
-            # invert scaling for actual
-
             train_y = train_y.reshape((len(train_y), 1))
             inv_y = np.concatenate((train_y, train_X[:, 1:self.n_features+1]), axis=1)
             inv_y = self.scaler.inverse_transform(inv_y)
             inv_y = inv_y[:,0]
-
+            
+            #store pred_y and true_y
             pred_y_list.append(inv_yhat)
             true_y_list.append(inv_y)
+            
         return pred_y_list, true_y_list
+
