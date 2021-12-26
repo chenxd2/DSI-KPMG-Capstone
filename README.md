@@ -136,7 +136,7 @@ We randomly picked two timestamps to forecast the target variable for future 24 
 We plan to simulate S&P 500 EPS data by resampling or machine learning methods to create more testing and validation sets. Further, we will test for different combinations of embedded models. Due to the time constraint, we will further embed more specific features and therefore finalize a more robust model approach for industry-level forecasting engagements.
 
 ## Reference
-For future prediction model instruction, please check this [Overall Market Earnings Growth Future Forecasting Instructions.ipynb]
+For future prediction model instruction, please check this [Overall Market Earnings Growth Future Forecasting Instructions](Overall Market Earnings Growth Future Forecasting Instructions.ipynb)
 
 9 Features from the Philadelphia Fed Survey: 
 https://www.philadelphiafed.org/surveys-and-data/community-development-data
