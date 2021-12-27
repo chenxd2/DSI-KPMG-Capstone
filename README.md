@@ -13,7 +13,10 @@ The Economic Forecasting Capstone project is sponsored by KPMG. Our objective is
 
 Our data includes monthly multiple economic indicators and adjusted Adjusted Earning Per Share Growth Index of S&P 500 from 1969.08.01 - 2021-03-01. We have also explored the time series pattern for our target variable. The details regarding features and target variable will be discussed in section II and III.
 
-![alt text](model.png)
+<p align="center">
+  <img src="fig/model.png"  width="800" height="600">
+</p >
+![alt text](fig/model.png)
 
 Since there is time dependency caused by the effect of previous lags of the predictors on the response, we further create sliding windows in a way such that we could provide our models more comprehensive information. We then deployed three multivariate time series models commonly used in the financial field: VAR models (vector autoregressive models), LSTM (Long Short-Term Memory) Recurrent Neural Network (RNN) and Convolutional Neural Network (CNN). Upon implementing both LSTM Recurrent Neural Network and Convolutional Neural Network, we further introduce a Random Forest model to predict a binary variable indicating where we are on the business cycle (either contraction or expansion period). The model details will be discussed in Section IV. Guided by the business cycle, we develop an ensemble rule which will be discussed in Section V to improve the effectiveness of running both LSTM and CNN together. The ensemble model architecture is shown above.
 
@@ -62,6 +65,10 @@ Above figure shows that in the case of lag = 3 and lead = 1, the model will map 
 
 ### Random Forest Model
 For future predictions, we wish to incorporate the influence of the business cycle. Therefore, we apply the same rolling window approach on our predictors and utilize them to further implement a random forest model for classifying future business cycles. It operates by constructing a multitude of decision trees at training time and uses the majority votes as the output. Genearly, random forest outperformed decision trees since it corrects for the overfitting to the training set. Random forest can also be used to rank the importance of features and they are computed as the mean and standard deviation of accumulation of the impurity decrease within each tree. 
+![alt text](rf.png)
+
+Below figures shows our random forest model prediction result.
+![alt text](rf2.png)
 
 ### Convolutional Neural Network Model
 
@@ -99,12 +106,12 @@ By implementing the Ensemble Rule, we are able to predict the context and the ta
 
 ### Backtesting
 
+![alt text](backtest.png)
 Backtesting is considered as an important tool in market analysis. Because of the unique features of time series data, and the requirement of data continuity in rolling windows, cross validation reduces the power of model evaluation. We applied two types of backtesting: the first one consists of 24 single tests, each of them tests on performance of a single “lead”, number of months forward; and the second one takes the average of predictions of all “leads” (1 to 24 months forward) for each time stamp. Backtesting takes place on entire historical data. Since our ensemble model outputs predictions for 24 months forward given each sliding window, each time stamp has 24 predicted values, from 24 different sliding windows. This feature makes the second type of backtesting come true. 
 
 We assessed model performance by both R-Square and Rooted Mean Square Error (RMSE). Testing results of each “lead” shows a descending accuracy. The following two plots visualized such relationships. Ensemble model that just predicts 1 month forward (“lead” = 1) outperformed one that predicts 24 months forward (“lead” = 24). 
 
-![alt text](leadrmse.png)
-![alt text](leadr2.png)
+![alt text](leadr2rmse.png)
 
 As we have mentioned before, on each time stamp, 24 different sliding windows made predictions, i.e. lead 1 for the sliding window ended by last month, lead 2 for the sliding window ended by two months ago, and so on. The following plot shows the performance of mean on backtesting. 
 
@@ -126,9 +133,8 @@ Since as time goes on, the predicted result of VAR would be based more and more 
 
 We randomly picked two timestamps to forecast the target variable for future 24 months followed by the ensemble rule we mentioned in Part 5. The images below showed the result of our ensemble model and the baseline model. During the expansion period, our ensemble model followed the trend while the baseline model did not. During the turning point in the business cycle, the ensemble model precisely forecasted the turning point while the baseline model did not.
 
-![alt text](expan.png)
+![alt text](expturning.png)
 
-![alt text](turning.png)
 
 
 ## Future Discussion
@@ -136,7 +142,7 @@ We randomly picked two timestamps to forecast the target variable for future 24 
 We plan to simulate S&P 500 EPS data by resampling or machine learning methods to create more testing and validation sets. Further, we will test for different combinations of embedded models. Due to the time constraint, we will further embed more specific features and therefore finalize a more robust model approach for industry-level forecasting engagements.
 
 ## Reference
-For future prediction model instruction, please check this [Overall Market Earnings Growth Future Forecasting Instructions](Overall Market Earnings Growth Future Forecasting Instructions.ipynb)
+For future prediction model instruction, please check this [Overall Market Earnings Growth Future Forecasting Instructions](https://github.com/chenxd2/DSI-KPMG-Capstone/blob/main/Overall%20Market%20Earnings%20Growth%20Future%20Forecasting%20Instructions.ipynb)
 
 9 Features from the Philadelphia Fed Survey: 
 https://www.philadelphiafed.org/surveys-and-data/community-development-data
