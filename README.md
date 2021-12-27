@@ -93,7 +93,7 @@ As discussed previously, for each feature we consider their past 24 months’ va
 
 Below figure shows our model structure:
 <p align="center">
-  <img src="fig/cnn2.png", width="400", height="400">
+  <img src="fig/cnn2.png", width="200", height="200">
 </p >
 
 
@@ -106,7 +106,7 @@ Given that RNN models have short term memories in which the model used previous 
 
 Below figure shows our model structure:
 <p align="center">
-  <img src="fig/lstm2.png", width="400", height="400">
+  <img src="fig/lstm2.png", width="200", height="200">
 </p >
 
 ## Ensemble Rule
