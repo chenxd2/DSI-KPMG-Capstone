@@ -73,7 +73,7 @@ Above figure shows that in the case of lag = 3 and lead = 1, the model will map 
 ### Random Forest Model
 For future predictions, we wish to incorporate the influence of the business cycle. Therefore, we apply the same rolling window approach on our predictors and utilize them to further implement a random forest model for classifying future business cycles. It operates by constructing a multitude of decision trees at training time and uses the majority votes as the output. Genearly, random forest outperformed decision trees since it corrects for the overfitting to the training set. Random forest can also be used to rank the importance of features and they are computed as the mean and standard deviation of accumulation of the impurity decrease within each tree. 
 <p align="center">
-  <img src="fig/rf.png">
+  <img src="fig/rf.png", width="600", height="600">
 </p >
 
 Below figures shows our random forest model prediction result.
@@ -88,7 +88,7 @@ The idea behind using the convolutional neural network is to simulate the window
 As discussed previously, for each feature we consider their past 24 months’ values and apply them into CNN. In the meantime, we set lead = 24, that is, we predict 1,2, ...24 months forward separately and take the average as a prediction. The figure illustration is shown below:
 
 <p align="center">
-  <img src="fig/cnn1.png">
+  <img src="fig/cnn1.png", width="600", height="600">
 </p >
 
 Below figure shows our model structure:
@@ -101,7 +101,7 @@ Below figure shows our model structure:
 
 Given that RNN models have short term memories in which the model used previous information for the current neural network. In an LSTM (Long Short-Term Memory) model, the recurrent weight matrix is replaced by an identity function in the carousel and controlled by a series of gates. The input gate, output gate and forget gate acts like a switch that controls the weights and creates the long term memory function. This feature allows us to use the LSTM model to predict time series data based on previous, sequential data and long-term information stored in the model. Similar to CNN, for each feature we consider their past 24 months’ values and apply them into LSTM. In the meantime, we set lead = 24, that is, we predict 1,2, ...24 months forward separately and take the average as a prediction.
 <p align="center">
-  <img src="fig/lstm1.png">
+  <img src="fig/lstm1.png", width="600", height="600">
 </p >
 
 Below figure shows our model structure:
@@ -116,7 +116,7 @@ In the pursuit of minimizing prediction errors, we selected two fine-tuned model
 To solve this problem, we introduced the Random Forest Model (RFM) to predict the business cycle. Since RFM has very high accuracy (95%), we believe it is a strong feature that we can trust more. Instead of including the RFM results as a feature in the training data, we introduced the Ensemble Rule with supreme influence from RFM to combine the predictions from LSTM and CNN models. In one sentence to describe the rule, the ensemble model selects the result that best conforms with random forest predictions. The Ensemble Rule works as follow:
 
 <p align="center">
-  <img src="fig/ensemble.png">
+  <img src="fig/ensemble.png", width="600", height="600">
 </p >
 
 For example, when the RFM predicts an expansion, we compare the results from LSTM and CNN with the target variable from last month. If both the results from LSTM and CNN are larger than the last target variable, we use the average of LSTM and CNN as the new prediction. Else, we use the maximum value from LSTM, CNN and the last target variable as the new prediction, etc.
@@ -162,7 +162,7 @@ Since as time goes on, the predicted result of VAR would be based more and more 
 We randomly picked two timestamps to forecast the target variable for future 24 months followed by the ensemble rule we mentioned in Part 5. The images below showed the result of our ensemble model and the baseline model. During the expansion period, our ensemble model followed the trend while the baseline model did not. During the turning point in the business cycle, the ensemble model precisely forecasted the turning point while the baseline model did not.
 
 <p align="center">
-  <img src="fig/expturning.png">
+  <img src="fig/expturning.png", width="600", height="600">
 </p >
 
 
