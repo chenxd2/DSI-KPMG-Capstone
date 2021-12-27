@@ -14,9 +14,8 @@ The Economic Forecasting Capstone project is sponsored by KPMG. Our objective is
 Our data includes monthly multiple economic indicators and adjusted Adjusted Earning Per Share Growth Index of S&P 500 from 1969.08.01 - 2021-03-01. We have also explored the time series pattern for our target variable. The details regarding features and target variable will be discussed in section II and III.
 
 <p align="center">
-  <img src="fig/model.png"  width="800" height="600">
+  <img src="fig/model.png">
 </p >
-![alt text](fig/model.png)
 
 Since there is time dependency caused by the effect of previous lags of the predictors on the response, we further create sliding windows in a way such that we could provide our models more comprehensive information. We then deployed three multivariate time series models commonly used in the financial field: VAR models (vector autoregressive models), LSTM (Long Short-Term Memory) Recurrent Neural Network (RNN) and Convolutional Neural Network (CNN). Upon implementing both LSTM Recurrent Neural Network and Convolutional Neural Network, we further introduce a Random Forest model to predict a binary variable indicating where we are on the business cycle (either contraction or expansion period). The model details will be discussed in Section IV. Guided by the business cycle, we develop an ensemble rule which will be discussed in Section V to improve the effectiveness of running both LSTM and CNN together. The ensemble model architecture is shown above.
 
@@ -32,7 +31,9 @@ Target Variable yt = (EPSt / EPS1969 Aug)*100
 
 Below figure shows the time series trend of our adjusted EPS:
 
-![alt text](y.png)
+<p align="center">
+  <img src="fig/y.png">
+</p >
 
 From here, we identified the peaks (green points) and troughs (red points) of our adjusted target variable by searching for local minimum and local maximum. The time series trend has identified several major past economic events including Dot-com bubble (2000-09-01 ~ 2007-06-01) and The Great Recession (2007-06-01 ~ 2012-03-01).
 
@@ -43,14 +44,18 @@ Multiple dashed and solid vertical lines represent distinct business cycles star
 ### Feature Selection
 Two groups of indicators are selected as input to the model. They are diffusion indices and economic indicators which quantify government policies. The Federal Reserve collects monthly data of activity rate, shipment, unfilled order, input price and employment rates from leading companies of each industry. In economic theories, these indicators have reliable predictive power on forecasting future economic activities.
 
-![alt text](relationship.png)
+<p align="center">
+  <img src="fig/relationship.png", width="400", height="400">
+</p >
 
 The above relationship graph shows the potential causal relationship between most of the common economic variables. The direction of the arrow implies that changes in one indicator impacts future changes of another. For example, higher volume of M2 supply will lower effective rate, then relatively higher import price and input price for the manufacturing (PPI). PPI in the end leads to the rise of CPI. We listed these indicators and potential relationships to figure out upper stream indicators that initiate rounds of business cycles. As we can perceive from the graph that Government Balance, 10 Years Treasury Yield (GS10), and M2 supply (cash, credit, saving, checking and certificate deposits) are reasons for changes in other indicators. Therefore, we combine both diffusion indices and indicators of government policy as input features
 
 ### Feature Importance
 The heatmap visualizes the feature importance of the Random Forest Model. This model performs a binary classification on business cycle (0 for contraction period, 1 for expansion period). The Latter result shows high accuracy and precision of this model, therefore the feature importance reflects how useful the lag of each predictor is in forecasting. 
 
-![alt text](importance.png)
+<p align="center">
+  <img src="fig/importance.png", width="600", height="600">
+</p >
 
 Laggings of months are listed in vertical direction, and indicators are in horizontal direction. Based on their contribution to prediction accuracy, diffusion indices perform differently from government policy indicators. Short term lags of diffusion indices are useful in forecasting, while long term lags from past one month to two years of government policy indicators are useful in the predication. Among all of the predictors, Employment Rate, Average Work Week, Activity Ratio, Unfilled Orders, GS10 and M2 Supply seem to contribute most to the reliable market growth forecasting. 
 
@@ -59,16 +64,22 @@ Laggings of months are listed in vertical direction, and indicators are in horiz
 ### Rolling Window and Forward Prediction
 Now we have a target variable y which is the response of many predictor variables. Furthermore, the response is also correlated with the lags of these feature variables. We wish our model could identify this time dependency. The approach followed by all below models is to reshape the information we have by sliding windows so that we could give more complete information to predict the response variable. Below figure shows how we approach:
 
-![alt text](window.png)
+<p align="center">
+  <img src="fig/window.png", width="600", height="600">
+</p >
 
 Above figure shows that in the case of lag = 3 and lead = 1, the model will map the information contained in the window (values from t-3, t-2, t-1) with the prediction at t. We will slide the window one step at a time and proceed to make predictions. Here, lead = 1 means that we are predicting one month forward (t). 
 
 ### Random Forest Model
 For future predictions, we wish to incorporate the influence of the business cycle. Therefore, we apply the same rolling window approach on our predictors and utilize them to further implement a random forest model for classifying future business cycles. It operates by constructing a multitude of decision trees at training time and uses the majority votes as the output. Genearly, random forest outperformed decision trees since it corrects for the overfitting to the training set. Random forest can also be used to rank the importance of features and they are computed as the mean and standard deviation of accumulation of the impurity decrease within each tree. 
-![alt text](rf.png)
+<p align="center">
+  <img src="fig/rf.png">
+</p >
 
 Below figures shows our random forest model prediction result.
-![alt text](rf2.png)
+<p align="center">
+  <img src="fig/rf2.png">
+</p >
 
 ### Convolutional Neural Network Model
 
@@ -76,19 +87,27 @@ The idea behind using the convolutional neural network is to simulate the window
 
 As discussed previously, for each feature we consider their past 24 months’ values and apply them into CNN. In the meantime, we set lead = 24, that is, we predict 1,2, ...24 months forward separately and take the average as a prediction. The figure illustration is shown below:
 
-![alt text](cnn1.png)
+<p align="center">
+  <img src="fig/cnn1.png">
+</p >
 
 Below figure shows our model structure:
-![alt text](cnn2.png)
+<p align="center">
+  <img src="fig/cnn2.png", width="400", height="400">
+</p >
 
 
 ### LSTM Recurrent Neural Network Model
 
 Given that RNN models have short term memories in which the model used previous information for the current neural network. In an LSTM (Long Short-Term Memory) model, the recurrent weight matrix is replaced by an identity function in the carousel and controlled by a series of gates. The input gate, output gate and forget gate acts like a switch that controls the weights and creates the long term memory function. This feature allows us to use the LSTM model to predict time series data based on previous, sequential data and long-term information stored in the model. Similar to CNN, for each feature we consider their past 24 months’ values and apply them into LSTM. In the meantime, we set lead = 24, that is, we predict 1,2, ...24 months forward separately and take the average as a prediction.
-![alt text](lstm1.png)
+<p align="center">
+  <img src="fig/lstm1.png">
+</p >
 
 Below figure shows our model structure:
-![alt text](lstm2.png)
+<p align="center">
+  <img src="fig/lstm2.png", width="400", height="400">
+</p >
 
 ## Ensemble Rule
 
@@ -96,7 +115,9 @@ In the pursuit of minimizing prediction errors, we selected two fine-tuned model
 
 To solve this problem, we introduced the Random Forest Model (RFM) to predict the business cycle. Since RFM has very high accuracy (95%), we believe it is a strong feature that we can trust more. Instead of including the RFM results as a feature in the training data, we introduced the Ensemble Rule with supreme influence from RFM to combine the predictions from LSTM and CNN models. In one sentence to describe the rule, the ensemble model selects the result that best conforms with random forest predictions. The Ensemble Rule works as follow:
 
-![alt text](emsemble.png)
+<p align="center">
+  <img src="fig/ensemble.png">
+</p >
 
 For example, when the RFM predicts an expansion, we compare the results from LSTM and CNN with the target variable from last month. If both the results from LSTM and CNN are larger than the last target variable, we use the average of LSTM and CNN as the new prediction. Else, we use the maximum value from LSTM, CNN and the last target variable as the new prediction, etc.
 
@@ -106,16 +127,23 @@ By implementing the Ensemble Rule, we are able to predict the context and the ta
 
 ### Backtesting
 
-![alt text](backtest.png)
+<p align="center">
+  <img src="fig/backtest.png", width="600", height="600">
+</p >
+
 Backtesting is considered as an important tool in market analysis. Because of the unique features of time series data, and the requirement of data continuity in rolling windows, cross validation reduces the power of model evaluation. We applied two types of backtesting: the first one consists of 24 single tests, each of them tests on performance of a single “lead”, number of months forward; and the second one takes the average of predictions of all “leads” (1 to 24 months forward) for each time stamp. Backtesting takes place on entire historical data. Since our ensemble model outputs predictions for 24 months forward given each sliding window, each time stamp has 24 predicted values, from 24 different sliding windows. This feature makes the second type of backtesting come true. 
 
 We assessed model performance by both R-Square and Rooted Mean Square Error (RMSE). Testing results of each “lead” shows a descending accuracy. The following two plots visualized such relationships. Ensemble model that just predicts 1 month forward (“lead” = 1) outperformed one that predicts 24 months forward (“lead” = 24). 
 
-![alt text](leadr2rmse.png)
+<p align="center">
+  <img src="fig/leadr2rmse.png">
+</p >
 
 As we have mentioned before, on each time stamp, 24 different sliding windows made predictions, i.e. lead 1 for the sliding window ended by last month, lead 2 for the sliding window ended by two months ago, and so on. The following plot shows the performance of mean on backtesting. 
 
-![alt text](overall.png)
+<p align="center">
+  <img src="fig/overall.png">
+</p >
 
 The fact that forecasting further months ahead from now boosted variance of prediction explains the phenomenon that “lead” = 1 accurately predicted all the trends of growth and even the turnover points, while “lead” = 24 failed to do so. Predictions based on models with “lead” less than 12 reflected high reliability, since all of the R-squares are higher than 0.95.  
 
@@ -133,7 +161,9 @@ Since as time goes on, the predicted result of VAR would be based more and more 
 
 We randomly picked two timestamps to forecast the target variable for future 24 months followed by the ensemble rule we mentioned in Part 5. The images below showed the result of our ensemble model and the baseline model. During the expansion period, our ensemble model followed the trend while the baseline model did not. During the turning point in the business cycle, the ensemble model precisely forecasted the turning point while the baseline model did not.
 
-![alt text](expturning.png)
+<p align="center">
+  <img src="fig/expturning.png">
+</p >
 
 
 
